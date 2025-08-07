@@ -11,14 +11,12 @@ app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'dev-secret-key-change-i
 # Global state for active agent
 active_agent_id = "default"  # There's always one active agent
 
-# Health check / keep-alive endpoint (API)
-@app.route('/api')
-def keep_alive_api():
-    return jsonify({
-        'status': 'alive',
-        'service': 'StoryTRON',
-        'active_agent': active_agent_id
-    })
+# Keep-alive endpoint for PomoTRON to ping StoryTRON
+@app.route('/api/keepalive', methods=['POST'])
+def keep_alive():
+    """PomoTRON pings this to let StoryTRON know it's alive"""
+    # TODO: Log the keep-alive, update last-seen timestamp, etc.
+    return '', 200
 
 # Web frontend routes
 @app.route('/')

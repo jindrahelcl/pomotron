@@ -41,7 +41,6 @@
     <h2>🎮 Rychlé akce</h2>
     <div style="display: flex; gap: 10px; flex-wrap: wrap;">
         <button class="btn" onclick="refreshStatus()">🔄 Obnovit status</button>
-        <button class="btn" onclick="sendKeepAlive()">💓 Keep-alive ping</button>
         <button class="btn btn-danger" onclick="sendEmergencyMessage()">🚨 Nouzová zpráva</button>
     </div>
 </div>
@@ -94,17 +93,6 @@
 <script>
 function refreshStatus() {
     location.reload();
-}
-
-function sendKeepAlive() {
-    fetch('/api')
-        .then(response => response.json())
-        .then(data => {
-            alert('Keep-alive odpověď: ' + JSON.stringify(data, null, 2));
-        })
-        .catch(error => {
-            alert('Chyba při keep-alive: ' + error);
-        });
 }
 
 function sendEmergencyMessage() {
