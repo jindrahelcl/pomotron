@@ -9,7 +9,7 @@ app = Flask(__name__)
 app.config['DEBUG'] = os.environ.get('DEBUG', 'False').lower() == 'true'
 app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'dev-secret-key-change-in-production')
 
-HISTORY_FILE = 'message_history.jsonl'
+HISTORY_FILE = os.environ.get('HISTORY_FILE', 'message_history.jsonl')
 
 def load_history():
     history = []
