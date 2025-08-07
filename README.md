@@ -14,7 +14,7 @@ Vercajk na Pomovu rozlučku
   - víc různě napromptovanejch agentů
   - puppet master rozhraní přes webovou appku na mobil kde bude vidět aktivní agent a bude se to dát přepínat
 
-- Story interface
+- Story interface (StoryTRON)
   - servica co běží na píčku
   - dostává requesty od pomovo appky
   - spravuje agenty a volá chatgpt API a responsy vrací do pomovo appky
