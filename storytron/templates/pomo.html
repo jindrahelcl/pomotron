@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PomoTRON</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Courier New', monospace;
+            background-color: #000;
+            color: #00ff00;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        h1 {
+            text-align: center;
+            margin-bottom: 30px;
+            color: #00ff00;
+            text-shadow: 0 0 10px #00ff00;
+        }
+
+        .chat-section {
+            background-color: #111;
+            border: 2px solid #333;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+
+        .chat-form {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .chat-input {
+            flex: 1;
+            background-color: #222;
+            border: 1px solid #444;
+            color: #00ff00;
+            padding: 12px;
+            border-radius: 5px;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+        }
+
+        .chat-input:focus {
+            outline: none;
+            border-color: #00ff00;
+            box-shadow: 0 0 5px #00ff00;
+        }
+
+        .send-btn {
+            background-color: #006600;
+            border: 1px solid #00ff00;
+            color: #00ff00;
+            padding: 12px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-family: 'Courier New', monospace;
+            font-weight: bold;
+        }
+
+        .send-btn:hover {
+            background-color: #008800;
+            box-shadow: 0 0 5px #00ff00;
+        }
+
+        .result {
+            margin-top: 10px;
+            padding: 10px;
+            border-radius: 5px;
+            text-align: center;
+        }
+
+        .history-section {
+            background-color: #111;
+            border: 2px solid #333;
+            border-radius: 10px;
+            padding: 20px;
+        }
+
+        .history-title {
+            margin-bottom: 15px;
+            color: #00ff00;
+            text-align: center;
+        }
+
+        .message-entry {
+            border: 1px solid #333;
+            margin: 10px 0;
+            padding: 15px;
+            border-radius: 5px;
+            background-color: #0a0a0a;
+        }
+
+        .message-meta {
+            font-size: 12px;
+            color: #888;
+            margin-bottom: 8px;
+        }
+
+        .message-text {
+            margin: 5px 0;
+            line-height: 1.4;
+        }
+
+        .message-user {
+            color: #00aaff;
+        }
+
+        .message-response {
+            color: #ffaa00;
+        }
+
+        .loading {
+            color: #888;
+            text-align: center;
+            padding: 20px;
+        }
+
+        .error {
+            color: #ff4444;
+        }
+
+        .success {
+            color: #00ff00;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>PomoTRON</h1>
+
+        <div class="chat-section">
+            <form onsubmit="sendMessage(event)" class="chat-form">
+                <input
+                    type="text"
+                    id="messageInput"
+                    class="chat-input"
+                    placeholder="Napište zprávu..."
+                    required
+                    autocomplete="off"
+                >
+                <button type="submit" class="send-btn">Poslat</button>
+            </form>
+            <div id="sendResult" class="result"></div>
+        </div>
+
+        <div class="history-section">
+            <h2 class="history-title">Historie zpráv</h2>
+            <div id="messageHistory" class="loading">
+                Načítání historie...
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function sendMessage(event) {
+            event.preventDefault();
+
+            const input = document.getElementById('messageInput');
+            const message = input.value.trim();
+            if (!message) return;
+
+            const resultDiv = document.getElementById('sendResult');
+            resultDiv.innerHTML = '<div style="color: #888;">Odesílání...</div>';
+
+            fetch('/api/chat', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    message: message,
+                    sender: 'pomo'
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.agent_response) {
+                    resultDiv.innerHTML = '<div class="success">Zpráva odeslána</div>';
+                    input.value = '';
+                    loadHistory();
+                } else {
+                    resultDiv.innerHTML = '<div class="error">Chyba při odesílání</div>';
+                }
+            })
+            .catch(error => {
+                resultDiv.innerHTML = '<div class="error">Chyba: ' + error + '</div>';
+            });
+        }
+
+        function loadHistory() {
+            fetch('/api/history')
+            .then(response => response.json())
+            .then(data => {
+                const historyDiv = document.getElementById('messageHistory');
+
+                if (data.history && data.history.length > 0) {
+                    const messages = data.history.slice().reverse();
+                    historyDiv.innerHTML = messages.map(msg => `
+                        <div class="message-entry">
+                            <div class="message-meta">
+                                ${new Date(msg.timestamp).toLocaleString()}
+                            </div>
+                            <div class="message-text">
+                                <strong class="message-user">Zpráva:</strong> ${msg.message}
+                            </div>
+                            <div class="message-text">
+                                <strong class="message-response">Odpověď:</strong> ${msg.response}
+                            </div>
+                        </div>
+                    `).join('');
+                } else {
+                    historyDiv.innerHTML = '<div style="color: #888; text-align: center;">Žádné zprávy</div>';
+                }
+            })
+            .catch(error => {
+                document.getElementById('messageHistory').innerHTML = '<div class="error">Chyba při načítání historie</div>';
+            });
+        }
+
+        document.addEventListener('DOMContentLoaded', function() {
+            loadHistory();
+            setInterval(loadHistory, 10000);
+        });
+    </script>
+</body>
+</html>

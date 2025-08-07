@@ -48,8 +48,8 @@ agents = {
 active_agent_id = "default"
 
 @app.route('/')
-def index():
-    return '', 404
+def pomo_interface():
+    return render_template('pomo.html')
 
 @app.route('/api/keepalive', methods=['POST'])
 def keep_alive():
