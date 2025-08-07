@@ -15,6 +15,9 @@ class RaspiTRON:
         self.main_win = None
         self.log_win = None
         self.log_content = None
+        self.last_keypress_time = 0
+        self.playback_delay = 0.3
+        self.last_spoken_length = 0
 
     def setup_windows(self, stdscr):
         height, width = stdscr.getmaxyx()
@@ -45,6 +48,32 @@ class RaspiTRON:
         if self.log_content:
             self.log_content.addstr(f" {action}\n")
             self.log_content.refresh()
+
+    def should_trigger_playback(self):
+        if not self.current_line.strip():
+            return False
+
+        # Only trigger if there's new content to speak
+        if len(self.current_line) <= self.last_spoken_length:
+            return False
+
+        # Immediate playback on sentence boundaries
+        if self.current_line.endswith(('.', '!', '?')):
+            return True
+
+        # Debounced playback after typing stops
+        time_since_last_key = time.time() - self.last_keypress_time
+        if time_since_last_key > self.playback_delay and len(self.current_line.strip()) > 0:
+            return True
+
+        return False
+
+    def trigger_playback(self):
+        # Only speak the new part
+        new_content = self.current_line[self.last_spoken_length:]
+        if new_content.strip():
+            self.log_action(f"Playback: '{new_content}'")
+            self.last_spoken_length = len(self.current_line)
 
     def send_message(self, message: str, content_win):
         try:
@@ -77,6 +106,8 @@ class RaspiTRON:
         content_win.move(y, 2 + self.cursor_pos)  # Position cursor correctly
 
     def handle_keypress(self, key_code: int, content_win):
+        self.last_keypress_time = time.time()
+
         if key_code == ord('q'):
             self.running = False
             self.log_action("User quit application")
@@ -88,6 +119,7 @@ class RaspiTRON:
                 message = self.current_line
                 self.current_line = ""
                 self.cursor_pos = 0
+                self.last_spoken_length = 0
                 content_win.addstr("\n")
                 self.send_message(message, content_win)
             else:
@@ -97,6 +129,9 @@ class RaspiTRON:
                 deleted_char = self.current_line[self.cursor_pos-1]
                 self.current_line = self.current_line[:self.cursor_pos-1] + self.current_line[self.cursor_pos:]
                 self.cursor_pos -= 1
+                # Reset spoken length if we backspace past it
+                if self.cursor_pos < self.last_spoken_length:
+                    self.last_spoken_length = self.cursor_pos
                 self.redraw_line(content_win)
         elif key_code == curses.KEY_LEFT:
             if self.cursor_pos > 0:
@@ -121,6 +156,11 @@ class RaspiTRON:
             self.current_line = self.current_line[:self.cursor_pos] + char + self.current_line[self.cursor_pos:]
             self.cursor_pos += 1
             self.redraw_line(content_win)
+
+            # Check for immediate playback on sentence end
+            if self.should_trigger_playback():
+                self.trigger_playback()
+
         elif 128 <= key_code <= 255:  # UTF-8 bytes
             self.utf8_buffer.append(key_code)
             try:
@@ -130,6 +170,11 @@ class RaspiTRON:
                 self.cursor_pos += 1
                 self.redraw_line(content_win)
                 self.utf8_buffer = []  # Clear buffer on success
+
+                # Check for immediate playback on sentence end
+                if self.should_trigger_playback():
+                    self.trigger_playback()
+
             except UnicodeDecodeError:
                 # Need more bytes, keep collecting
                 if len(self.utf8_buffer) > 4:  # UTF-8 max is 4 bytes
@@ -162,6 +207,10 @@ class RaspiTRON:
             key = main_content.getch()
             if key != -1:
                 self.handle_keypress(key, main_content)
+            else:
+                # Check for debounced playback when no keys are pressed
+                if self.should_trigger_playback():
+                    self.trigger_playback()
             time.sleep(0.01)
 
 def main():
