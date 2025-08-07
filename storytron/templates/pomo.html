@@ -15,14 +15,14 @@
             font-family: 'Courier New', monospace;
             background-color: #000;
             color: #00ff00;
-            height: 100vh;
+            height: 100dvh; /* Dynamic viewport height for mobile, fallback to 100vh */
             overflow: hidden;
         }
 
         .chat-container {
             display: flex;
             flex-direction: column;
-            height: 100vh;
+            height: 100dvh; /* Dynamic viewport height for mobile, fallback to 100vh */
             max-width: 600px;
             margin: 0 auto;
             border: 2px solid #333;
@@ -223,13 +223,20 @@
         }
 
         @media (max-width: 600px) {
+            body {
+                padding: 0;
+            }
+
             .chat-container {
                 border: none;
                 border-radius: 0;
+                max-width: 100%;
+                height: calc(100dvh - env(safe-area-inset-top) - env(safe-area-inset-bottom));
             }
 
             .chat-header {
                 padding: 15px;
+                padding-top: calc(15px + env(safe-area-inset-top));
             }
 
             .chat-header h1 {
@@ -242,6 +249,7 @@
 
             .chat-input-container {
                 padding: 15px;
+                padding-bottom: calc(15px + env(safe-area-inset-bottom));
             }
         }
     </style>
