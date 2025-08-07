@@ -3,3 +3,4 @@ python-dotenv
 openai
 requests
 jsonlines
+jsonlines
