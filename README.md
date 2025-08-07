@@ -22,6 +22,7 @@ Vercajk na Pomovu rozlučku
   - posílá do puppet master appky nějaký basic informace o sobě a pomovo appce (online, offline, traffic)
  
 - Pomova appka
+  - na píčku se zapne během startupu po autologinu, měla by bejt furt na popředí, ideálně jen konzolová věc
   - úderem klávesnice zopakuje co bylo napsáno
   - speciální klávesa která zahraje help
   - speciální klávesa která vymaže vstup
