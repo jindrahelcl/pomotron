@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+
+{% block title %}Chyba {{ error_code }} - PuppeTRON{% endblock %}
+
+{% block content %}
+<div class="card error">
+    <h2>❌ Chyba {{ error_code }}</h2>
+    <p>{{ error_message }}</p>
+
+    <div style="margin-top: 20px;">
+        <button class="btn" onclick="history.back()">⬅️ Zpět</button>
+        <a href="{{ url_for('dashboard') }}" class="btn">🏠 Dashboard</a>
+    </div>
+</div>
+{% endblock %}

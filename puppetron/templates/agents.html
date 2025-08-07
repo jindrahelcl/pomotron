@@ -1,0 +1,67 @@
+{% extends "base.html" %}
+
+{% block title %}Agenti - PuppeTRON{% endblock %}
+
+{% block content %}
+<div class="card">
+    <h2>🤖 Správa agentů</h2>
+    <p>Přepínání mezi různými AI agenty v StoryTRON systému.</p>
+</div>
+
+{% if agents and agents.agents %}
+<div class="agent-grid">
+    {% for agent in agents.agents %}
+    <div class="agent-card {% if agent.id == agents.active_agent %}active{% endif %}">
+        <h3>{{ agent.name }}</h3>
+        <p><strong>ID:</strong> <code>{{ agent.id }}</code></p>
+        <p>{{ agent.description }}</p>
+
+        {% if agent.id == agents.active_agent %}
+            <div style="margin-top: 15px;">
+                <span style="color: #00ff00; font-weight: bold;">✅ AKTIVNÍ AGENT</span>
+            </div>
+        {% else %}
+            <form method="POST" action="{{ url_for('switch_agent') }}" style="margin-top: 15px;">
+                <input type="hidden" name="agent_id" value="{{ agent.id }}">
+                <button type="submit" class="btn" onclick="return confirm('Chcete přepnout na agenta {{ agent.name }}?')">
+                    🔄 Aktivovat agenta
+                </button>
+            </form>
+        {% endif %}
+    </div>
+    {% endfor %}
+</div>
+
+<div class="card">
+    <h2>ℹ️ Informace o agentech</h2>
+    <p><strong>Aktuálně aktivní:</strong> {{ agents.active_agent }}</p>
+    <p><strong>Celkem dostupných:</strong> {{ agents.agents|length }}</p>
+    <p><strong>Posledníí aktualizace:</strong> {{ moment().format('HH:mm:ss') if moment else 'N/A' }}</p>
+</div>
+
+{% else %}
+<div class="card error">
+    <h2>❌ Nepodařilo se načíst agenty</h2>
+    <p>Nelze se připojit k StoryTRON API pro získání seznamu agentů.</p>
+    <button class="btn" onclick="location.reload()">🔄 Zkusit znovu</button>
+</div>
+{% endif %}
+
+<div class="card">
+    <h2>🎮 Akce</h2>
+    <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+        <button class="btn" onclick="location.reload()">🔄 Obnovit seznam</button>
+        <a href="{{ url_for('dashboard') }}" class="btn">📊 Zpět na dashboard</a>
+        <a href="{{ url_for('chat') }}" class="btn">💬 Test chat</a>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+// Auto-refresh každých 10 sekund
+setInterval(() => {
+    location.reload();
+}, 10000);
+</script>
+{% endblock %}

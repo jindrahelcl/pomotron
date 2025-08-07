@@ -1,0 +1,150 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard - PuppeTRON{% endblock %}
+
+{% block content %}
+<div class="status-bar">
+    <div>
+        <strong>StoryTRON Status:</strong>
+        {% if status %}
+            <span style="color: #00ff00;">🟢 ONLINE</span>
+        {% else %}
+            <span style="color: #ff0000;">🔴 OFFLINE</span>
+        {% endif %}
+    </div>
+    <div>
+        <strong>Čas:</strong> {{ timestamp }}
+    </div>
+</div>
+
+{% if status %}
+<div class="card">
+    <h2>🤖 Aktivní Agent</h2>
+    <p><strong>ID:</strong> {{ status.active_agent }}</p>
+    {% if agents and agents.agents %}
+        {% for agent in agents.agents %}
+            {% if agent.id == status.active_agent %}
+                <p><strong>Název:</strong> {{ agent.name }}</p>
+                <p><strong>Popis:</strong> {{ agent.description }}</p>
+            {% endif %}
+        {% endfor %}
+    {% endif %}
+</div>
+
+<div class="card">
+    <h2>📊 Systémové informace</h2>
+    <p><strong>Služba:</strong> {{ status.service }}</p>
+    <p><strong>Status:</strong> {{ status.status }}</p>
+</div>
+
+<div class="card">
+    <h2>🎮 Rychlé akce</h2>
+    <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+        <button class="btn" onclick="refreshStatus()">🔄 Obnovit status</button>
+        <button class="btn" onclick="sendKeepAlive()">💓 Keep-alive ping</button>
+        <button class="btn btn-danger" onclick="sendEmergencyMessage()">🚨 Nouzová zpráva</button>
+    </div>
+</div>
+
+{% if agents and agents.agents %}
+<div class="card">
+    <h2>🔄 Rychlé přepnutí agenta</h2>
+    <div class="agent-grid">
+        {% for agent in agents.agents %}
+        <div class="agent-card {% if agent.id == status.active_agent %}active{% endif %}">
+            <h3>{{ agent.name }}</h3>
+            <p>{{ agent.description }}</p>
+            {% if agent.id != status.active_agent %}
+                <form method="POST" action="{{ url_for('switch_agent') }}" style="margin-top: 10px;">
+                    <input type="hidden" name="agent_id" value="{{ agent.id }}">
+                    <button type="submit" class="btn">Aktivovat</button>
+                </form>
+            {% else %}
+                <div style="margin-top: 10px;">
+                    <span style="color: #00ff00;">✅ AKTIVNÍ</span>
+                </div>
+            {% endif %}
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endif %}
+
+<div class="card">
+    <h2>📱 Poslat zprávu do Pomo zařízení</h2>
+    <form onsubmit="sendMessageToPomo(event)">
+        <div class="form-group">
+            <input type="text" class="form-control" id="pomoMessage" placeholder="Zpráva pro pomo zařízení..." required>
+        </div>
+        <button type="submit" class="btn">📤 Poslat</button>
+    </form>
+    <div id="pomoResult" style="margin-top: 10px;"></div>
+</div>
+
+{% else %}
+<div class="card error">
+    <h2>❌ StoryTRON nedostupný</h2>
+    <p>Nelze se připojit k StoryTRON serveru. Zkontrolujte, zda běží na {{ STORYTRON_BASE_URL }}.</p>
+    <button class="btn" onclick="location.reload()">🔄 Zkusit znovu</button>
+</div>
+{% endif %}
+{% endblock %}
+
+{% block scripts %}
+<script>
+function refreshStatus() {
+    location.reload();
+}
+
+function sendKeepAlive() {
+    fetch('/api/status')
+        .then(response => response.json())
+        .then(data => {
+            alert('Keep-alive odpověď: ' + JSON.stringify(data, null, 2));
+        })
+        .catch(error => {
+            alert('Chyba při keep-alive: ' + error);
+        });
+}
+
+function sendEmergencyMessage() {
+    const message = prompt('Zadejte nouzovou zprávu:');
+    if (message) {
+        sendMessageToPomo(null, message);
+    }
+}
+
+function sendMessageToPomo(event, customMessage = null) {
+    if (event) event.preventDefault();
+
+    const message = customMessage || document.getElementById('pomoMessage').value;
+    if (!message) return;
+
+    fetch('/send-message', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ message: message })
+    })
+    .then(response => response.json())
+    .then(data => {
+        const result = document.getElementById('pomoResult');
+        if (data.success) {
+            result.innerHTML = '<div style="color: #00ff00;">✅ ' + data.message + '</div>';
+        } else {
+            result.innerHTML = '<div style="color: #ff0000;">❌ Chyba při odesílání zprávy</div>';
+        }
+        if (!customMessage) {
+            document.getElementById('pomoMessage').value = '';
+        }
+    })
+    .catch(error => {
+        document.getElementById('pomoResult').innerHTML = '<div style="color: #ff0000;">❌ Chyba: ' + error + '</div>';
+    });
+}
+
+// Auto-refresh každých 30 sekund
+setInterval(refreshStatus, 30000);
+</script>
+{% endblock %}

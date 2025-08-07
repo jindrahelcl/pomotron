@@ -1,0 +1,100 @@
+{% extends "base.html" %}
+
+{% block title %}Chat Test - PuppeTRON{% endblock %}
+
+{% block content %}
+<div class="card">
+    <h2>💬 Chat test s aktivním agentem</h2>
+    <p>Testování komunikace s aktuálně aktivním agentem přes StoryTRON API.</p>
+</div>
+
+<div class="card">
+    <form method="POST">
+        <div class="form-group">
+            <label for="message">Zpráva pro agenta:</label>
+            <input type="text"
+                   class="form-control"
+                   id="message"
+                   name="message"
+                   placeholder="Napište zprávu..."
+                   value="{{ user_message or '' }}"
+                   required>
+        </div>
+        <button type="submit" class="btn">📤 Poslat zprávu</button>
+    </form>
+</div>
+
+{% if user_message and bot_response %}
+<div class="card">
+    <h3>📝 Konverzace</h3>
+
+    <div class="chat-message" style="border-left-color: #ffff00;">
+        <strong>👤 Vy:</strong>
+        <p>{{ user_message }}</p>
+    </div>
+
+    {% if bot_response %}
+    <div class="chat-message" style="border-left-color: #00ff00;">
+        <strong>🤖 Agent ({{ bot_response.active_agent if bot_response.active_agent else 'N/A' }}):</strong>
+        <p>{{ bot_response.agent_response if bot_response.agent_response else 'Žádná odpověď' }}</p>
+        {% if bot_response.timestamp %}
+        <small style="color: #888;">{{ bot_response.timestamp }}</small>
+        {% endif %}
+    </div>
+    {% else %}
+    <div class="chat-message error">
+        <strong>❌ Chyba:</strong>
+        <p>Nepodařilo se získat odpověď od agenta. StoryTRON možná není dostupný.</p>
+    </div>
+    {% endif %}
+</div>
+{% endif %}
+
+<div class="card">
+    <h3>ℹ️ Rychlé zprávy</h3>
+    <p>Klikněte pro rychlé testování:</p>
+    <div style="display: flex; gap: 10px; flex-wrap: wrap; margin-top: 10px;">
+        <button class="btn" onclick="sendQuickMessage('Ahoj!')">👋 Ahoj!</button>
+        <button class="btn" onclick="sendQuickMessage('Jak se máš?')">❓ Jak se máš?</button>
+        <button class="btn" onclick="sendQuickMessage('Řekni mi něco zajímavého')">🌟 Zajímavé</button>
+        <button class="btn" onclick="sendQuickMessage('Pomož mi s problémem')">🆘 Pomoc</button>
+    </div>
+</div>
+
+<div class="card">
+    <h3>🎮 Akce</h3>
+    <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+        <button class="btn" onclick="clearChat()">🗑️ Vymazat chat</button>
+        <a href="{{ url_for('dashboard') }}" class="btn">📊 Dashboard</a>
+        <a href="{{ url_for('agents_page') }}" class="btn">🤖 Změnit agenta</a>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function sendQuickMessage(message) {
+    document.getElementById('message').value = message;
+    document.querySelector('form').submit();
+}
+
+function clearChat() {
+    if (confirm('Opravdu chcete vymazat chat?')) {
+        window.location.href = '{{ url_for("chat") }}';
+    }
+}
+
+// Focus na input při načtení stránky
+document.addEventListener('DOMContentLoaded', function() {
+    document.getElementById('message').focus();
+});
+
+// Submit na Enter
+document.getElementById('message').addEventListener('keypress', function(e) {
+    if (e.key === 'Enter') {
+        e.preventDefault();
+        document.querySelector('form').submit();
+    }
+});
+</script>
+{% endblock %}
