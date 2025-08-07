@@ -1,12 +1,16 @@
 from flask import Flask, request, jsonify, render_template, redirect, url_for
 import os
 from datetime import datetime
+from agents import DefaultAgent
 
 app = Flask(__name__)
 
 app.config['DEBUG'] = os.environ.get('DEBUG', 'False').lower() == 'true'
 app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'dev-secret-key-change-in-production')
 
+agents = {
+    "default": DefaultAgent()
+}
 active_agent_id = "default"
 
 @app.route('/')
@@ -20,11 +24,7 @@ def keep_alive():
 
 @app.route('/master')
 def dashboard():
-    available_agents = [
-        {"id": "default", "name": "Default Agent", "description": "Basic conversational agent"},
-        {"id": "helper", "name": "Helper Agent", "description": "Task assistance agent"},
-        {"id": "creative", "name": "Creative Agent", "description": "Creative writing agent"}
-    ]
+    available_agents = [agent.to_dict() for agent in agents.values()]
 
     status = {
         'status': 'alive',
@@ -39,11 +39,7 @@ def dashboard():
 
 @app.route('/web/agents')
 def web_agents():
-    available_agents = [
-        {"id": "default", "name": "Default Agent", "description": "Basic conversational agent"},
-        {"id": "helper", "name": "Helper Agent", "description": "Task assistance agent"},
-        {"id": "creative", "name": "Creative Agent", "description": "Creative writing agent"}
-    ]
+    available_agents = [agent.to_dict() for agent in agents.values()]
 
     return render_template('agents.html',
                          agents={'agents': available_agents, 'active_agent': active_agent_id})
@@ -53,10 +49,12 @@ def web_chat():
     if request.method == 'POST':
         message = request.form.get('message')
         if message:
+            agent = agents[active_agent_id]
+            agent_response = agent.chat(message)
             response = {
                 'active_agent': active_agent_id,
                 'user_message': message,
-                'agent_response': f'Response from {active_agent_id}: This is a placeholder response.',
+                'agent_response': agent_response,
                 'timestamp': datetime.now().isoformat()
             }
             return render_template('chat.html', user_message=message, bot_response=response)
@@ -66,7 +64,7 @@ def web_chat():
 @app.route('/switch-agent', methods=['POST'])
 def web_switch_agent():
     agent_id = request.form.get('agent_id')
-    if agent_id:
+    if agent_id and agent_id in agents:
         global active_agent_id
         active_agent_id = agent_id
         return redirect(url_for('dashboard'))
@@ -74,12 +72,7 @@ def web_switch_agent():
 
 @app.route('/api/agents', methods=['GET'])
 def list_agents():
-    # TODO: Implement actual agent listing logic
-    available_agents = [
-        {"id": "default", "name": "Default Agent", "description": "Basic conversational agent"},
-        {"id": "helper", "name": "Helper Agent", "description": "Task assistance agent"},
-        {"id": "creative", "name": "Creative Agent", "description": "Creative writing agent"}
-    ]
+    available_agents = [agent.to_dict() for agent in agents.values()]
 
     return jsonify({
         'agents': available_agents,
@@ -89,12 +82,16 @@ def list_agents():
 @app.route('/api/agents/<agent_id>/activate', methods=['POST'])
 def switch_agent(agent_id):
     global active_agent_id
-    # TODO: Validate that agent_id exists
-    active_agent_id = agent_id
-    return jsonify({
-        'message': f'Switched to agent: {agent_id}',
-        'active_agent': active_agent_id
-    })
+    if agent_id in agents:
+        active_agent_id = agent_id
+        return jsonify({
+            'message': f'Switched to agent: {agent_id}',
+            'active_agent': active_agent_id
+        })
+    else:
+        return jsonify({
+            'error': f'Agent {agent_id} not found'
+        }), 404
 
 @app.route('/api/chat', methods=['POST'])
 def chat():
@@ -107,11 +104,13 @@ def chat():
 
     message = data.get('message', '')
 
-    # TODO: Implement actual chat with the active GPT agent
+    agent = agents[active_agent_id]
+    agent_response = agent.chat(message)
+
     return jsonify({
         'active_agent': active_agent_id,
         'user_message': message,
-        'agent_response': f'Response from {active_agent_id}: This is a placeholder response.',
+        'agent_response': agent_response,
         'timestamp': datetime.now().isoformat()
     })
 
