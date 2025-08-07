@@ -67,9 +67,9 @@ def dashboard():
     }
 
     return render_template('dashboard.html',
-                         status=status,
-                         agents={'agents': available_agents, 'active_agent': active_agent_id},
-                         timestamp=datetime.now().strftime('%H:%M:%S'))
+                        status=status,
+                        agents={'agents': available_agents, 'active_agent': active_agent_id},
+                        timestamp=datetime.now().strftime('%H:%M:%S'))
 
 @app.route('/web/agents')
 def web_agents():
