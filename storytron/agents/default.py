@@ -4,8 +4,7 @@ class DefaultAgent(BaseAgent):
     def __init__(self):
         super().__init__(
             agent_id="default",
-            name="Default Agent",
-            description="Echo agent"
+            name="Default Agent"
         )
 
     def chat(self, message):

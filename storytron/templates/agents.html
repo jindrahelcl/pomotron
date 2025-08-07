@@ -14,7 +14,6 @@
     <div class="agent-card {% if agent.id == agents.active_agent %}active{% endif %}">
         <h3>{{ agent.name }}</h3>
         <p><strong>ID:</strong> <code>{{ agent.id }}</code></p>
-        <p>{{ agent.description }}</p>
 
         {% if agent.id == agents.active_agent %}
             <div style="margin-top: 15px;">
@@ -46,15 +45,6 @@
     <button class="btn" onclick="location.reload()">🔄 Zkusit znovu</button>
 </div>
 {% endif %}
-
-<div class="card">
-    <h2>🎮 Akce</h2>
-    <div style="display: flex; gap: 10px; flex-wrap: wrap;">
-        <button class="btn" onclick="location.reload()">🔄 Obnovit seznam</button>
-        <a href="{{ url_for('dashboard') }}" class="btn">📊 Zpět na dashboard</a>
-        <a href="{{ url_for('web_chat') }}" class="btn">💬 Test chat</a>
-    </div>
-</div>
 {% endblock %}
 
 {% block scripts %}

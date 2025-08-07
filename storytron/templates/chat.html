@@ -60,15 +60,6 @@
         <button class="btn" onclick="sendQuickMessage('Pomož mi s problémem')">🆘 Pomoc</button>
     </div>
 </div>
-
-<div class="card">
-    <h3>🎮 Akce</h3>
-    <div style="display: flex; gap: 10px; flex-wrap: wrap;">
-        <button class="btn" onclick="clearChat()">🗑️ Vymazat chat</button>
-        <a href="{{ url_for('dashboard') }}" class="btn">📊 Dashboard</a>
-        <a href="{{ url_for('web_agents') }}" class="btn">🤖 Změnit agenta</a>
-    </div>
-</div>
 {% endblock %}
 
 {% block scripts %}
@@ -76,12 +67,6 @@
 function sendQuickMessage(message) {
     document.getElementById('message').value = message;
     document.querySelector('form').submit();
-}
-
-function clearChat() {
-    if (confirm('Opravdu chcete vymazat chat?')) {
-        window.location.href = '{{ url_for("web_chat") }}';
-    }
 }
 
 // Focus na input při načtení stránky

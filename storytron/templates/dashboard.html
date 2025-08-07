@@ -25,24 +25,9 @@
         {% for agent in agents.agents %}
             {% if agent.id == status.active_agent %}
                 <p><strong>Název:</strong> {{ agent.name }}</p>
-                <p><strong>Popis:</strong> {{ agent.description }}</p>
             {% endif %}
         {% endfor %}
     {% endif %}
-</div>
-
-<div class="card">
-    <h2>📊 Systémové informace</h2>
-    <p><strong>Služba:</strong> {{ status.service }}</p>
-    <p><strong>Status:</strong> {{ status.status }}</p>
-</div>
-
-<div class="card">
-    <h2>🎮 Rychlé akce</h2>
-    <div style="display: flex; gap: 10px; flex-wrap: wrap;">
-        <button class="btn" onclick="refreshStatus()">🔄 Obnovit status</button>
-        <button class="btn btn-danger" onclick="sendEmergencyMessage()">🚨 Nouzová zpráva</button>
-    </div>
 </div>
 
 {% if agents and agents.agents %}
@@ -52,7 +37,6 @@
         {% for agent in agents.agents %}
         <div class="agent-card {% if agent.id == status.active_agent %}active{% endif %}">
             <h3>{{ agent.name }}</h3>
-            <p>{{ agent.description }}</p>
             {% if agent.id != status.active_agent %}
                 <form method="POST" action="{{ url_for('web_switch_agent') }}" style="margin-top: 10px;">
                     <input type="hidden" name="agent_id" value="{{ agent.id }}">
@@ -91,17 +75,6 @@
 
 {% block scripts %}
 <script>
-function refreshStatus() {
-    location.reload();
-}
-
-function sendEmergencyMessage() {
-    const message = prompt('Zadejte nouzovou zprávu:');
-    if (message) {
-        sendMessageToPomo(null, message);
-    }
-}
-
 function sendMessageToPomo(event, customMessage = null) {
     if (event) event.preventDefault();
 
@@ -131,8 +104,5 @@ function sendMessageToPomo(event, customMessage = null) {
         document.getElementById('pomoResult').innerHTML = '<div style="color: #ff0000;">❌ Chyba: ' + error + '</div>';
     });
 }
-
-// Auto-refresh každých 30 sekund
-setInterval(refreshStatus, 30000);
 </script>
 {% endblock %}
