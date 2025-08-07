@@ -1,20 +1,51 @@
 from flask import Flask, request, jsonify, render_template, redirect, url_for
 import os
+import jsonlines
 from datetime import datetime
-from agents import DefaultAgent, NegativeAgent
+from agents import DefaultAgent, NegativeAgent, StartAgent
 
 app = Flask(__name__)
 
 app.config['DEBUG'] = os.environ.get('DEBUG', 'False').lower() == 'true'
 app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'dev-secret-key-change-in-production')
 
+HISTORY_FILE = 'message_history.jsonl'
+
+def load_history():
+    history = []
+    if os.path.exists(HISTORY_FILE):
+        try:
+            with jsonlines.open(HISTORY_FILE) as reader:
+                for entry in reader:
+                    history.append(entry)
+        except Exception as e:
+            print(f"Error loading history: {e}")
+    return history
+
+def save_history(history):
+    try:
+        with jsonlines.open(HISTORY_FILE, mode='w') as writer:
+            for entry in history:
+                writer.write(entry)
+    except Exception as e:
+        print(f"Error saving history: {e}")
+
+def append_to_history(entry):
+    try:
+        with jsonlines.open(HISTORY_FILE, mode='a') as writer:
+            writer.write(entry)
+    except Exception as e:
+        print(f"Error appending to history: {e}")
+
+def get_current_history():
+    return load_history()
+
 agents = {
     "default": DefaultAgent(),
-    "negative": NegativeAgent()
+    "negative": NegativeAgent(),
+    "start": StartAgent()
 }
 active_agent_id = "default"
-
-message_history = []
 
 @app.route('/')
 def index():
@@ -99,15 +130,15 @@ def chat():
     agent_response = agent.chat(message)
     timestamp = datetime.now().isoformat()
 
-    # Store in history
-    global message_history
-    message_history.append({
+    entry = {
         'timestamp': timestamp,
         'sender': sender,
         'message': message,
         'response': agent_response,
         'agent': active_agent_id
-    })
+    }
+
+    append_to_history(entry)
 
     return jsonify({
         'active_agent': active_agent_id,
@@ -118,15 +149,21 @@ def chat():
 
 @app.route('/api/history', methods=['GET'])
 def get_history():
+    current_history = get_current_history()
     return jsonify({
-        'history': message_history,
-        'count': len(message_history)
+        'history': current_history,
+        'count': len(current_history)
     })
 
 @app.route('/api/history', methods=['DELETE'])
 def clear_history():
-    global message_history
-    message_history = []
+    # Remove history file
+    if os.path.exists(HISTORY_FILE):
+        try:
+            os.remove(HISTORY_FILE)
+        except Exception as e:
+            print(f"Error removing history file: {e}")
+
     return jsonify({'message': 'History cleared'})
 
 @app.errorhandler(404)
