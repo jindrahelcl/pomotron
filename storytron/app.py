@@ -1,13 +1,18 @@
 from flask import Flask, request, jsonify, render_template, redirect, url_for
+from werkzeug.middleware.proxy_fix import ProxyFix
 import os
 import jsonlines
 from datetime import datetime
 from agents import DefaultAgent, NegativeAgent, StartAgent
 
 app = Flask(__name__)
+app.wsgi_app = ProxyFix(
+    app.wsgi_app, x_for=1, x_proto=1, x_host=1, x_prefix=1
+)
 
 app.config['DEBUG'] = os.environ.get('DEBUG', 'False').lower() == 'true'
 app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'dev-secret-key-change-in-production')
+app.config['APPLICATION_ROOT'] = '/pomotron'
 
 HISTORY_FILE = os.environ.get('HISTORY_FILE', 'message_history.jsonl')
 
