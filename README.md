@@ -14,3 +14,24 @@ Vercajk na Pomovu rozlučku
   - víc různě napromptovanejch agentů
   - puppet master rozhraní přes webovou appku na mobil kde bude vidět aktivní agent a bude se to dát přepínat
 
+- Story interface
+  - servica co běží na píčku
+  - dostává requesty od pomovo appky
+  - spravuje agenty a volá chatgpt API a responsy vrací do pomovo appky
+  - dostává requesty od puppet master appky a mění aktivního agenta
+  - posílá do puppet master appky nějaký basic informace o sobě a pomovo appce (online, offline, traffic)
+ 
+- Pomova appka
+  - úderem klávesnice zopakuje co bylo napsáno
+  - speciální klávesa která zahraje help
+  - speciální klávesa která vymaže vstup
+  - speciální klávesa která přečte co je napsáno na vstupu
+  - entr to pošle do chatbota
+  - pak to počká a přečte to odpověď
+  - musí to asi nějak umět handlovat když se něco posere
+
+- Puppet master appka
+  - ovládá aktivního agenta
+  - zobrazuje historii celýho příběhu
+  - ukazuje stav celýho systému
+  - jde z ní posílat random kecy do pomovy appky, nebo mimikovat kecy co napsal pomo do svojí appky
