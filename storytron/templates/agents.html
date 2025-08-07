@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 
-{% block title %}Agenti - PuppeTRON{% endblock %}
+{% block title %}Agenti - StoryTRON{% endblock %}
 
 {% block content %}
 <div class="card">
@@ -21,7 +21,7 @@
                 <span style="color: #00ff00; font-weight: bold;">✅ AKTIVNÍ AGENT</span>
             </div>
         {% else %}
-            <form method="POST" action="{{ url_for('switch_agent') }}" style="margin-top: 15px;">
+            <form method="POST" action="{{ url_for('web_switch_agent') }}" style="margin-top: 15px;">
                 <input type="hidden" name="agent_id" value="{{ agent.id }}">
                 <button type="submit" class="btn" onclick="return confirm('Chcete přepnout na agenta {{ agent.name }}?')">
                     🔄 Aktivovat agenta
@@ -52,7 +52,7 @@
     <div style="display: flex; gap: 10px; flex-wrap: wrap;">
         <button class="btn" onclick="location.reload()">🔄 Obnovit seznam</button>
         <a href="{{ url_for('dashboard') }}" class="btn">📊 Zpět na dashboard</a>
-        <a href="{{ url_for('chat') }}" class="btn">💬 Test chat</a>
+        <a href="{{ url_for('web_chat') }}" class="btn">💬 Test chat</a>
     </div>
 </div>
 {% endblock %}

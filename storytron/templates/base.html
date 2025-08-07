@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{% block title %}PuppeTRON{% endblock %}</title>
+    <title>{% block title %}StoryTRON{% endblock %}</title>
     <style>
         * {
             margin: 0;
@@ -153,14 +153,14 @@
 <body>
     <div class="container">
         <div class="header">
-            <h1>🎭 PuppeTRON</h1>
-            <p>Puppet Master Interface pro StoryTRON</p>
+            <h1>🎭 StoryTRON</h1>
+            <p>GPT Agents Management & Puppet Master Interface</p>
         </div>
 
         <div class="nav">
             <a href="{{ url_for('dashboard') }}" class="btn">📊 Dashboard</a>
-            <a href="{{ url_for('agents_page') }}" class="btn">🤖 Agenti</a>
-            <a href="{{ url_for('chat') }}" class="btn">💬 Chat Test</a>
+            <a href="{{ url_for('web_agents') }}" class="btn">🤖 Agenti</a>
+            <a href="{{ url_for('web_chat') }}" class="btn">💬 Chat Test</a>
         </div>
 
         <main>

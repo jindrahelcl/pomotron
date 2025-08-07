@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 
-{% block title %}Dashboard - PuppeTRON{% endblock %}
+{% block title %}Dashboard - StoryTRON{% endblock %}
 
 {% block content %}
 <div class="status-bar">
@@ -55,7 +55,7 @@
             <h3>{{ agent.name }}</h3>
             <p>{{ agent.description }}</p>
             {% if agent.id != status.active_agent %}
-                <form method="POST" action="{{ url_for('switch_agent') }}" style="margin-top: 10px;">
+                <form method="POST" action="{{ url_for('web_switch_agent') }}" style="margin-top: 10px;">
                     <input type="hidden" name="agent_id" value="{{ agent.id }}">
                     <button type="submit" class="btn">Aktivovat</button>
                 </form>
@@ -97,7 +97,7 @@ function refreshStatus() {
 }
 
 function sendKeepAlive() {
-    fetch('/api/status')
+    fetch('/api')
         .then(response => response.json())
         .then(data => {
             alert('Keep-alive odpověď: ' + JSON.stringify(data, null, 2));
