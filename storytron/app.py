@@ -14,6 +14,8 @@ agents = {
 }
 active_agent_id = "default"
 
+message_history = []
+
 @app.route('/')
 def index():
     return '', 404
@@ -44,6 +46,10 @@ def web_agents():
 
     return render_template('agents.html',
                          agents={'agents': available_agents, 'active_agent': active_agent_id})
+
+@app.route('/web/history')
+def web_history():
+    return render_template('history.html')
 
 @app.route('/switch-agent', methods=['POST'])
 def web_switch_agent():
@@ -87,16 +93,41 @@ def chat():
         }), 400
 
     message = data.get('message', '')
+    sender = data.get('sender', 'web')  # 'web' or 'pomo'
 
     agent = agents[active_agent_id]
     agent_response = agent.chat(message)
+    timestamp = datetime.now().isoformat()
+
+    # Store in history
+    global message_history
+    message_history.append({
+        'timestamp': timestamp,
+        'sender': sender,
+        'message': message,
+        'response': agent_response,
+        'agent': active_agent_id
+    })
 
     return jsonify({
         'active_agent': active_agent_id,
         'user_message': message,
         'agent_response': agent_response,
-        'timestamp': datetime.now().isoformat()
+        'timestamp': timestamp
     })
+
+@app.route('/api/history', methods=['GET'])
+def get_history():
+    return jsonify({
+        'history': message_history,
+        'count': len(message_history)
+    })
+
+@app.route('/api/history', methods=['DELETE'])
+def clear_history():
+    global message_history
+    message_history = []
+    return jsonify({'message': 'History cleared'})
 
 @app.errorhandler(404)
 def not_found(error):

@@ -65,6 +65,16 @@
 </div>
 
 <div class="card">
+    <h2>📜 Poslední zprávy (3)</h2>
+    <div id="messageHistory">
+        <p style="color: #888;">Načítání historie...</p>
+    </div>
+    <div style="margin-top: 10px;">
+        <a href="{{ url_for('web_history') }}" class="btn">📜 Zobrazit celou historii</a>
+    </div>
+</div>
+
+<div class="card">
     <h2>📱 Poslat zprávu do Pomo zařízení</h2>
     <form onsubmit="sendMessageToPomo(event)">
         <div class="form-group">
@@ -103,21 +113,46 @@ function sendChatMessage(event) {
     .then(data => {
         const result = document.getElementById('chatResult');
         if (data.agent_response) {
-            result.innerHTML = `
-                <div style="border-left: 3px solid #ffff00; padding: 10px; margin: 5px 0; background-color: rgba(255,255,0,0.1);">
-                    <strong>👤 Vy:</strong> ${message}
-                </div>
-                <div style="border-left: 3px solid #00ff00; padding: 10px; margin: 5px 0; background-color: rgba(0,255,0,0.1);">
-                    <strong>🤖 ${data.active_agent}:</strong> ${data.agent_response}
-                </div>
-            `;
+            result.innerHTML = '<div style="color: #00ff00;">✅ Zpráva odeslána</div>';
         } else {
             result.innerHTML = '<div style="color: #ff0000;">❌ Chyba při komunikaci s agentem</div>';
         }
         document.getElementById('chatMessage').value = '';
+        loadHistory(); // Refresh history after sending message
     })
     .catch(error => {
         document.getElementById('chatResult').innerHTML = '<div style="color: #ff0000;">❌ Chyba: ' + error + '</div>';
+    });
+}
+
+function loadHistory() {
+    fetch('/api/history')
+    .then(response => response.json())
+    .then(data => {
+        const historyDiv = document.getElementById('messageHistory');
+        if (data.history && data.history.length > 0) {
+            const recent3 = data.history.slice(-3).reverse();
+            historyDiv.innerHTML = recent3.map(msg => `
+                <div style="border: 1px solid #333; margin: 5px 0; padding: 10px; border-radius: 5px;">
+                    <div style="font-size: 0.8em; color: #888; margin-bottom: 5px;">
+                        ${new Date(msg.timestamp).toLocaleString()} |
+                        Odesílatel: ${msg.sender === 'web' ? '👤 Web' : '🎮 Pomo'} |
+                        Agent: ${msg.agent}
+                    </div>
+                    <div style="margin: 5px 0;">
+                        <strong>📤 Zpráva:</strong> ${msg.message}
+                    </div>
+                    <div style="margin: 5px 0;">
+                        <strong>📥 Odpověď:</strong> ${msg.response}
+                    </div>
+                </div>
+            `).join('');
+        } else {
+            historyDiv.innerHTML = '<p style="color: #888;">Žádné zprávy v historii.</p>';
+        }
+    })
+    .catch(error => {
+        document.getElementById('messageHistory').innerHTML = '<div style="color: #ff0000;">❌ Chyba při načítání historie</div>';
     });
 }
 
@@ -150,5 +185,10 @@ function sendMessageToPomo(event, customMessage = null) {
         document.getElementById('pomoResult').innerHTML = '<div style="color: #ff0000;">❌ Chyba: ' + error + '</div>';
     });
 }
+
+// Load history when page loads
+document.addEventListener('DOMContentLoaded', function() {
+    loadHistory();
+});
 </script>
 {% endblock %}

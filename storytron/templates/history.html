@@ -1,0 +1,74 @@
+{% extends "base.html" %}
+
+{% block title %}Historie zpráv - StoryTRON{% endblock %}
+
+{% block content %}
+<div class="card">
+    <h2>📜 Kompletní historie zpráv</h2>
+    <p>Všechny zprávy a odpovědi mezi uživateli a agenty.</p>
+</div>
+
+<div class="card">
+    <div id="fullMessageHistory" style="max-height: 600px; overflow-y: auto;">
+        <p style="color: #888;">Načítání historie...</p>
+    </div>
+    <div style="margin-top: 10px;">
+        <button class="btn" onclick="loadFullHistory()">🔄 Obnovit historii</button>
+        <button class="btn btn-danger" onclick="clearFullHistory()">🗑️ Vymazat historii</button>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function loadFullHistory() {
+    fetch('/api/history')
+    .then(response => response.json())
+    .then(data => {
+        const historyDiv = document.getElementById('fullMessageHistory');
+        if (data.history && data.history.length > 0) {
+            historyDiv.innerHTML = data.history.slice().reverse().map(msg => `
+                <div style="border: 1px solid #333; margin: 5px 0; padding: 10px; border-radius: 5px;">
+                    <div style="font-size: 0.8em; color: #888; margin-bottom: 5px;">
+                        ${new Date(msg.timestamp).toLocaleString()} |
+                        Odesílatel: ${msg.sender === 'web' ? '👤 Web' : '🎮 Pomo'} |
+                        Agent: ${msg.agent}
+                    </div>
+                    <div style="margin: 5px 0;">
+                        <strong>📤 Zpráva:</strong> ${msg.message}
+                    </div>
+                    <div style="margin: 5px 0;">
+                        <strong>📥 Odpověď:</strong> ${msg.response}
+                    </div>
+                </div>
+            `).join('');
+        } else {
+            historyDiv.innerHTML = '<p style="color: #888;">Žádné zprávy v historii.</p>';
+        }
+    })
+    .catch(error => {
+        document.getElementById('fullMessageHistory').innerHTML = '<div style="color: #ff0000;">❌ Chyba při načítání historie</div>';
+    });
+}
+
+function clearFullHistory() {
+    if (confirm('Opravdu chcete vymazat celou historii zpráv?')) {
+        fetch('/api/history', { method: 'DELETE' })
+        .then(() => {
+            loadFullHistory();
+        })
+        .catch(error => {
+            alert('Chyba při mazání historie: ' + error);
+        });
+    }
+}
+
+// Load history when page loads
+document.addEventListener('DOMContentLoaded', function() {
+    loadFullHistory();
+});
+
+// Auto-refresh every 30 seconds
+setInterval(loadFullHistory, 30000);
+</script>
+{% endblock %}
