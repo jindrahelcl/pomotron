@@ -1,7 +1,7 @@
 from flask import Flask, request, jsonify, render_template, redirect, url_for
 import os
 from datetime import datetime
-from agents import DefaultAgent
+from agents import DefaultAgent, NegativeAgent
 
 app = Flask(__name__)
 
@@ -9,7 +9,8 @@ app.config['DEBUG'] = os.environ.get('DEBUG', 'False').lower() == 'true'
 app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'dev-secret-key-change-in-production')
 
 agents = {
-    "default": DefaultAgent()
+    "default": DefaultAgent(),
+    "negative": NegativeAgent()
 }
 active_agent_id = "default"
 
