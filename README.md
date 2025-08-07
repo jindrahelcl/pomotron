@@ -9,15 +9,12 @@ Vercajk na Pomovu rozlučku
   - výstup pouze repráček
   - běží na tom nějakej language model
 
-- Language model
-  - powered přes ChatGPT API
-  - víc různě napromptovanejch agentů
-  - puppet master rozhraní přes webovou appku na mobil kde bude vidět aktivní agent a bude se to dát přepínat
-
 - Story interface (StoryTRON)
   - servica co běží na veřejný IP adrese
   - dostává requesty od pomovo appky
   - spravuje agenty a volá chatgpt API a responsy vrací do pomovo appky
+    - víc různě napromptovanejch agentů
+    - jeden aktivní
   - dostává requesty od puppet master appky a mění aktivního agenta
   - posílá do puppet master appky nějaký basic informace o sobě a pomovo appce (online, offline, traffic)
 
