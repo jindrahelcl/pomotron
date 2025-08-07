@@ -10,4 +10,7 @@ Vercajk na Pomovu rozlučku
   - běží na tom nějakej language model
  
 - Language model
-  - jakej? co? jak udělat ten dialog?
+  - powered přes ChatGPT API
+  - víc různě napromptovanejch agentů
+  - puppet master rozhraní přes webovou appku na mobil kde bude vidět aktivní agent a bude se to dát přepínat
+
