@@ -4,15 +4,15 @@ from .base import BaseAgent
 
 class StartAgent(BaseAgent):
     def __init__(self):
-        super().__init__()
-        self.id = "start"
-        self.name = "Start Agent"
-        self.client = openai.OpenAI(
-            api_key=os.environ.get('OPENAI_API_KEY')
-        )
+        super().__init__("start", "Start Agent")
+        self.client = None
+        if os.environ.get('OPENAI_API_KEY'):
+            self.client = openai.OpenAI(
+                api_key=os.environ.get('OPENAI_API_KEY')
+            )
 
     def chat(self, message):
-        if not os.environ.get('OPENAI_API_KEY'):
+        if not self.client:
             return "Error: OpenAI API key not configured"
 
         try:

@@ -56,7 +56,7 @@ def keep_alive():
     # TODO: Log the keep-alive, update last-seen timestamp, etc.
     return '', 200
 
-@app.route('/master')
+@app.route('/web')
 def dashboard():
     available_agents = [agent.to_dict() for agent in agents.values()]
 
