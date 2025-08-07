@@ -54,6 +54,17 @@
 {% endif %}
 
 <div class="card">
+    <h2>💬 Chat s aktivním agentem</h2>
+    <form onsubmit="sendChatMessage(event)">
+        <div class="form-group">
+            <input type="text" class="form-control" id="chatMessage" placeholder="Napište zprávu pro agenta..." required>
+        </div>
+        <button type="submit" class="btn">📤 Poslat zprávu</button>
+    </form>
+    <div id="chatResult" style="margin-top: 10px;"></div>
+</div>
+
+<div class="card">
     <h2>📱 Poslat zprávu do Pomo zařízení</h2>
     <form onsubmit="sendMessageToPomo(event)">
         <div class="form-group">
@@ -75,6 +86,41 @@
 
 {% block scripts %}
 <script>
+function sendChatMessage(event) {
+    event.preventDefault();
+
+    const message = document.getElementById('chatMessage').value;
+    if (!message) return;
+
+    fetch('/api/chat', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ message: message })
+    })
+    .then(response => response.json())
+    .then(data => {
+        const result = document.getElementById('chatResult');
+        if (data.agent_response) {
+            result.innerHTML = `
+                <div style="border-left: 3px solid #ffff00; padding: 10px; margin: 5px 0; background-color: rgba(255,255,0,0.1);">
+                    <strong>👤 Vy:</strong> ${message}
+                </div>
+                <div style="border-left: 3px solid #00ff00; padding: 10px; margin: 5px 0; background-color: rgba(0,255,0,0.1);">
+                    <strong>🤖 ${data.active_agent}:</strong> ${data.agent_response}
+                </div>
+            `;
+        } else {
+            result.innerHTML = '<div style="color: #ff0000;">❌ Chyba při komunikaci s agentem</div>';
+        }
+        document.getElementById('chatMessage').value = '';
+    })
+    .catch(error => {
+        document.getElementById('chatResult').innerHTML = '<div style="color: #ff0000;">❌ Chyba: ' + error + '</div>';
+    });
+}
+
 function sendMessageToPomo(event, customMessage = null) {
     if (event) event.preventDefault();
 

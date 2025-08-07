@@ -45,23 +45,6 @@ def web_agents():
     return render_template('agents.html',
                          agents={'agents': available_agents, 'active_agent': active_agent_id})
 
-@app.route('/web/chat', methods=['GET', 'POST'])
-def web_chat():
-    if request.method == 'POST':
-        message = request.form.get('message')
-        if message:
-            agent = agents[active_agent_id]
-            agent_response = agent.chat(message)
-            response = {
-                'active_agent': active_agent_id,
-                'user_message': message,
-                'agent_response': agent_response,
-                'timestamp': datetime.now().isoformat()
-            }
-            return render_template('chat.html', user_message=message, bot_response=response)
-
-    return render_template('chat.html')
-
 @app.route('/switch-agent', methods=['POST'])
 def web_switch_agent():
     agent_id = request.form.get('agent_id')
