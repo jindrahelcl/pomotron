@@ -178,7 +178,7 @@
             const resultDiv = document.getElementById('sendResult');
             resultDiv.innerHTML = '<div style="color: #888;">Odesílání...</div>';
 
-            fetch('/api/chat', {
+            fetch('{{ url_for("chat") }}', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -204,7 +204,7 @@
         }
 
         function loadHistory() {
-            fetch('/api/history')
+            fetch('{{ url_for("get_history") }}')
             .then(response => response.json())
             .then(data => {
                 const historyDiv = document.getElementById('messageHistory');

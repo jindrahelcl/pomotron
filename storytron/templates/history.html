@@ -22,7 +22,7 @@
 {% block scripts %}
 <script>
 function loadFullHistory() {
-    fetch('/api/history')
+    fetch('{{ url_for("get_history") }}')
     .then(response => response.json())
     .then(data => {
         const historyDiv = document.getElementById('fullMessageHistory');
@@ -53,7 +53,7 @@ function loadFullHistory() {
 
 function clearFullHistory() {
     if (confirm('Opravdu chcete vymazat celou historii zpráv?')) {
-        fetch('/api/history', { method: 'DELETE' })
+        fetch('{{ url_for("clear_history") }}', { method: 'DELETE' })
         .then(() => {
             loadFullHistory();
         })
