@@ -18,7 +18,7 @@ except Exception:
 
 class RaspiTRON:
     def __init__(self):
-        self.storytron_url = os.environ.get('STORYTRON_URL', 'https://reggnox.cz/pomotron')
+        self.storytron_url = os.environ.get('STORYTRON_URL', 'https://pomotron.cz')
         self.running = True
         self.current_line = ""
         self.cursor_pos = 0
