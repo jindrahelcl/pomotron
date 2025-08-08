@@ -57,9 +57,9 @@ class Story:
                 return 'negative'
         elif current_id == 'negative' and agent_reply.lower().startswith('no shit'):
             agents['negative'].mark_satisfied()
-            if 'start' in agents:
-                return 'start'
-        # Start agent never gets satisfied and stays active
+
+            agents['default'].reset_satisfaction()
+            return 'default'
 
         return current_id
 
