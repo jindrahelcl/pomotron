@@ -1,4 +1,5 @@
 from .base import BaseAgent
+import random
 
 class NegativeAgent(BaseAgent):
     def __init__(self):
@@ -8,4 +9,11 @@ class NegativeAgent(BaseAgent):
         )
 
     def chat(self, message):
-        return f"no, {message}"
+        responses = [
+            f"no {message}",
+            f"absolutely not {message}",
+            f"never {message}",
+            "no shit, that's terrible",
+            "no shit, I hate this"
+        ]
+        return random.choice(responses)

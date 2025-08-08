@@ -1,6 +1,7 @@
 import json, os
 
 STATE_FILE = os.environ.get('STORY_STATE_FILE', 'story_state.json')
+DEFAULT_STATE_FILE = os.environ.get('DEFAULT_STORY_STATE_FILE', 'default_story_state.json')
 
 
 class Story:
@@ -37,19 +38,29 @@ class Story:
         return reply
 
     def reset_story(self):
-        """Reset story to initial state: first agent active, all agents unsatisfied."""
-        first_agent_id = list(self._agents.keys())[0]
-        self.current_id = first_agent_id
-        for agent in self._agents.values():
-            agent.reset_satisfaction()
+        """Reset story to default state from default_story_state.json."""
+        with open(DEFAULT_STATE_FILE, 'r') as f:
+            default_data = json.load(f)
+        self._apply_state(default_data)
         self._save_state()
 
     def _decide_agent(self, current_id, agents, user_message, agent_reply, history=None):
-        """Return the agent id to use for the NEXT turn.
-
-        TODO: incorporate agent satisfaction flags, scoring, context analysis, etc.
-        Currently NO-OP: keeps current agent.
+        """Story progression logic:
+        1. Default agent -> satisfied when user says "happy" -> switch to negative
+        2. Negative agent -> satisfied when its reply starts with "no shit" -> switch to start
+        3. Start agent -> never satisfied, stays active
         """
+        # Check if current agent becomes satisfied
+        if current_id == 'default' and 'happy' in user_message.lower():
+            agents['default'].mark_satisfied()
+            if 'negative' in agents:
+                return 'negative'
+        elif current_id == 'negative' and agent_reply.lower().startswith('no shit'):
+            agents['negative'].mark_satisfied()
+            if 'start' in agents:
+                return 'start'
+        # Start agent never gets satisfied and stays active
+
         return current_id
 
     # ---- persistence ----

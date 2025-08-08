@@ -51,6 +51,13 @@ story = Story([
     NegativeAgent(),
     StartAgent()
 ])
+
+# Initialize state file from default if it doesn't exist
+if not os.path.exists('story_state.json'):
+    if os.path.exists('default_story_state.json'):
+        import shutil
+        shutil.copy('default_story_state.json', 'story_state.json')
+
 story.load_state()
 
 @app.route('/')
