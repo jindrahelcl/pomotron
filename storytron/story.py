@@ -45,19 +45,13 @@ class Story:
         self._save_state()
 
     def _decide_agent(self, current_id, agents, user_message, agent_reply, history=None):
-        """Story progression logic:
-        1. Default agent -> satisfied when user says "happy" -> switch to negative
-        2. Negative agent -> satisfied when its reply starts with "no shit" -> switch to start
-        3. Start agent -> never satisfied, stays active
-        """
-        # Check if current agent becomes satisfied
+        """ MAIN STORY PROGRESSION LOGIC, IMPLEMENT HERE (possibly refactor to a separate module what do I know...) """
         if current_id == 'default' and 'happy' in user_message.lower():
             agents['default'].mark_satisfied()
-            if 'negative' in agents:
-                return 'negative'
+            agents['negative'].reset_satisfaction()
+            return 'negative'
         elif current_id == 'negative' and agent_reply.lower().startswith('no shit'):
             agents['negative'].mark_satisfied()
-
             agents['default'].reset_satisfaction()
             return 'default'
 
