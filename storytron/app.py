@@ -12,7 +12,7 @@ app.wsgi_app = ProxyFix(
 
 app.config['DEBUG'] = os.environ.get('DEBUG', 'False').lower() == 'true'
 app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'dev-secret-key-change-in-production')
-app.config['APPLICATION_ROOT'] = '/pomotron'
+app.config['APPLICATION_ROOT'] = '/'
 
 HISTORY_FILE = os.environ.get('HISTORY_FILE', 'message_history.jsonl')
 
