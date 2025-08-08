@@ -4,6 +4,7 @@ import os
 import jsonlines
 from datetime import datetime
 from agents import DefaultAgent, NegativeAgent, StartAgent
+from story import Story
 
 app = Flask(__name__)
 app.wsgi_app = ProxyFix(
@@ -45,12 +46,12 @@ def append_to_history(entry):
 def get_current_history():
     return load_history()
 
-agents = {
-    "default": DefaultAgent(),
-    "negative": NegativeAgent(),
-    "start": StartAgent()
-}
-active_agent_id = "default"
+story = Story([
+    DefaultAgent(),
+    NegativeAgent(),
+    StartAgent()
+])
+story.load_state()
 
 @app.route('/')
 def pomo_interface():
@@ -63,25 +64,23 @@ def keep_alive():
 
 @app.route('/web')
 def dashboard():
-    available_agents = [agent.to_dict() for agent in agents.values()]
-
+    available_agents = story.to_listing()
     status = {
         'status': 'alive',
         'service': 'StoryTRON',
-        'active_agent': active_agent_id
+        'active_agent': story.current_id
     }
 
     return render_template('dashboard.html',
                         status=status,
-                        agents={'agents': available_agents, 'active_agent': active_agent_id},
+                        agents={'agents': available_agents, 'active_agent': story.current_id},
                         timestamp=datetime.now().strftime('%H:%M:%S'))
 
 @app.route('/web/agents')
 def web_agents():
-    available_agents = [agent.to_dict() for agent in agents.values()]
-
+    available_agents = story.to_listing()
     return render_template('agents.html',
-                         agents={'agents': available_agents, 'active_agent': active_agent_id})
+                         agents={'agents': available_agents, 'active_agent': story.current_id})
 
 @app.route('/web/history')
 def web_history():
@@ -90,29 +89,26 @@ def web_history():
 @app.route('/switch-agent', methods=['POST'])
 def web_switch_agent():
     agent_id = request.form.get('agent_id')
-    if agent_id and agent_id in agents:
-        global active_agent_id
-        active_agent_id = agent_id
-        return redirect(url_for('dashboard'))
+    if agent_id and agent_id in story.agents:
+        story.set_active(agent_id)
+        return redirect(url_for('web_agents'))
     return redirect(url_for('web_agents'))
 
 @app.route('/api/agents', methods=['GET'])
 def list_agents():
-    available_agents = [agent.to_dict() for agent in agents.values()]
-
+    available_agents = story.to_listing()
     return jsonify({
         'agents': available_agents,
-        'active_agent': active_agent_id
+        'active_agent': story.current_id
     })
 
 @app.route('/api/agents/<agent_id>/activate', methods=['POST'])
 def switch_agent(agent_id):
-    global active_agent_id
-    if agent_id in agents:
-        active_agent_id = agent_id
+    if agent_id in story.agents:
+        story.set_active(agent_id)
         return jsonify({
             'message': f'Switched to agent: {agent_id}',
-            'active_agent': active_agent_id
+            'active_agent': story.current_id
         })
     else:
         return jsonify({
@@ -131,8 +127,7 @@ def chat():
     message = data.get('message', '')
     sender = data.get('sender', 'web')  # 'web' or 'pomo'
 
-    agent = agents[active_agent_id]
-    agent_response = agent.chat(message)
+    agent_response = story.chat(message)
     timestamp = datetime.now().isoformat()
 
     entry = {
@@ -140,13 +135,13 @@ def chat():
         'sender': sender,
         'message': message,
         'response': agent_response,
-        'agent': active_agent_id
+    'agent': story.current_id
     }
 
     append_to_history(entry)
 
     return jsonify({
-        'active_agent': active_agent_id,
+    'active_agent': story.current_id,
         'user_message': message,
         'agent_response': agent_response,
         'timestamp': timestamp

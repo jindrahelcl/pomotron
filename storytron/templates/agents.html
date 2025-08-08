@@ -1,11 +1,11 @@
 {% extends "base.html" %}
 
-{% block title %}Agenti - StoryTRON{% endblock %}
+{% block title %}Příběh - StoryTRON{% endblock %}
 
 {% block content %}
 <div class="card">
-    <h2>🤖 Správa agentů</h2>
-    <p>Přepínání mezi různými AI agenty v StoryTRON systému.</p>
+    <h2>📖 Příběh</h2>
+    <p>Aktuální stav příběhu a správa agentů v systému PomoTRON.</p>
 </div>
 
 {% if agents and agents.agents %}
@@ -14,6 +14,7 @@
     <div class="agent-card {% if agent.id == agents.active_agent %}active{% endif %}">
         <h3>{{ agent.name }}</h3>
         <p><strong>ID:</strong> <code>{{ agent.id }}</code></p>
+        <p><strong>Spokojen:</strong> {{ 'ANO' if agent.satisfied else 'NE' }}</p>
 
         {% if agent.id == agents.active_agent %}
             <div style="margin-top: 15px;">
@@ -22,9 +23,7 @@
         {% else %}
             <form method="POST" action="{{ url_for('web_switch_agent') }}" style="margin-top: 15px;">
                 <input type="hidden" name="agent_id" value="{{ agent.id }}">
-                <button type="submit" class="btn" onclick="return confirm('Chcete přepnout na agenta {{ agent.name }}?')">
-                    🔄 Aktivovat agenta
-                </button>
+                <button type="submit" class="btn">🔄 Aktivovat</button>
             </form>
         {% endif %}
     </div>
@@ -32,16 +31,16 @@
 </div>
 
 <div class="card">
-    <h2>ℹ️ Informace o agentech</h2>
+    <h2>ℹ️ Informace o příběhu</h2>
     <p><strong>Aktuálně aktivní:</strong> {{ agents.active_agent }}</p>
-    <p><strong>Celkem dostupných:</strong> {{ agents.agents|length }}</p>
-    <p><strong>Posledníí aktualizace:</strong> {{ moment().format('HH:mm:ss') if moment else 'N/A' }}</p>
+    <p><strong>Celkem agentů:</strong> {{ agents.agents|length }}</p>
+    <p><strong>Poslední aktualizace:</strong> {{ moment().format('HH:mm:ss') if moment else 'N/A' }}</p>
 </div>
 
 {% else %}
 <div class="card error">
-    <h2>❌ Nepodařilo se načíst agenty</h2>
-    <p>Nelze se připojit k StoryTRON API pro získání seznamu agentů.</p>
+    <h2>❌ Nepodařilo se načíst příběh</h2>
+    <p>Nelze se připojit k StoryTRON API pro získání stavu příběhu.</p>
     <button class="btn" onclick="location.reload()">🔄 Zkusit znovu</button>
 </div>
 {% endif %}
