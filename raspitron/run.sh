@@ -5,6 +5,10 @@
 
 echo "=== RaspiTRON Launcher ==="
 
+# Resolve script directory and enter it
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+cd "$SCRIPT_DIR"
+
 # Check if Python 3 is available
 if ! command -v python3 &> /dev/null; then
     echo "Error: Python 3 is required but not installed"
@@ -19,14 +23,34 @@ else
     echo "Using configured StoryTRON URL: $STORYTRON_URL"
 fi
 
-# Check if requirements are installed
-if ! python3 -c "import requests" 2>/dev/null; then
-    echo "Installing requirements..."
-    pip install -r requirements.txt
+# Setup virtual environment to avoid system Python restrictions (PEP 668)
+VENV_DIR="$SCRIPT_DIR/.venv"
+if [ ! -d "$VENV_DIR" ]; then
+    echo "Creating virtual environment..."
+    python3 -m venv "$VENV_DIR"
+fi
+
+PY="$VENV_DIR/bin/python"
+PIP="$VENV_DIR/bin/pip"
+
+echo "Installing Python dependencies..."
+"$PIP" install --quiet --upgrade pip
+"$PIP" install --quiet -r "$SCRIPT_DIR/requirements.txt"
+
+# Check for audio player (mpg123/ffplay/mpv)
+if command -v mpg123 &> /dev/null; then
+    AUDIO_PLAYER=mpg123
+elif command -v ffplay &> /dev/null; then
+    AUDIO_PLAYER=ffplay
+elif command -v mpv &> /dev/null; then
+    AUDIO_PLAYER=mpv
+else
+    echo "Warning: No audio player found (mpg123/ffplay/mpv). TTS will be disabled."
+    export RASPITRON_TTS=0
 fi
 
 echo "Starting RaspiTRON..."
 echo ""
 
 # Start the application
-python3 main.py
+"$PY" "$SCRIPT_DIR/main.py"

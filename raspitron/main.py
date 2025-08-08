@@ -4,6 +4,17 @@ import os
 import curses
 import time
 import requests
+import threading
+import queue
+import tempfile
+import subprocess
+import shutil
+from typing import Optional, List
+try:
+    from gtts import gTTS  # type: ignore
+    _GTTS_AVAILABLE = True
+except Exception:
+    _GTTS_AVAILABLE = False
 
 class RaspiTRON:
     def __init__(self):
@@ -18,6 +29,19 @@ class RaspiTRON:
         self.last_keypress_time = 0
         self.playback_delay = 0.3
         self.last_spoken_length = 0
+
+        # TTS config
+        self.tts_enabled = os.environ.get('RASPITRON_TTS', '1') != '0'
+        self.tts_lang = os.environ.get('RASPITRON_TTS_LANG', 'en')
+        self._tts_queue: "queue.Queue" = queue.Queue()
+        self._tts_thread: Optional[threading.Thread] = None
+        self._audio_player_cmd: Optional[List[str]] = self._detect_audio_player()
+        if self.tts_enabled and not _GTTS_AVAILABLE:
+            # gTTS is not installed; disable TTS gracefully
+            self.tts_enabled = False
+            self.log_action("TTS disabled: gTTS not available")
+        if self.tts_enabled and self._audio_player_cmd is not None:
+            self._start_tts_thread()
 
     def setup_windows(self, stdscr):
         height, width = stdscr.getmaxyx()
@@ -75,6 +99,65 @@ class RaspiTRON:
             self.log_action(f"Playback: '{new_content}'")
             self.last_spoken_length = len(self.current_line)
 
+    def _detect_audio_player(self) -> Optional[List[str]]:
+        # Prefer lightweight players available on Raspberry Pi / Linux
+        if shutil.which('mpg123'):
+            return ['mpg123', '-q']
+        if shutil.which('ffplay'):
+            return ['ffplay', '-nodisp', '-autoexit', '-loglevel', 'quiet']
+        if shutil.which('mpv'):
+            return ['mpv', '--really-quiet', '--no-video']
+        return None
+
+    def _start_tts_thread(self):
+        self._tts_thread = threading.Thread(target=self._tts_worker, daemon=True)
+        self._tts_thread.start()
+
+    def _tts_worker(self):
+        while self.running:
+            try:
+                text = self._tts_queue.get(timeout=0.1)
+            except queue.Empty:
+                continue
+            if text is None:
+                break
+            if not text.strip():
+                continue
+            if self._audio_player_cmd is None:
+                # Disable TTS if no player available
+                self.tts_enabled = False
+                continue
+            try:
+                with tempfile.NamedTemporaryFile(suffix='.mp3', delete=False) as tmp_file:
+                    tmp_path = tmp_file.name
+                # Synthesize
+                # Import here in case it was missing at startup but installed later
+                if not _GTTS_AVAILABLE:
+                    raise RuntimeError("gTTS not available")
+                tts = gTTS(text=text, lang=self.tts_lang)
+                tts.save(tmp_path)
+                # Play
+                subprocess.run(self._audio_player_cmd + [tmp_path], check=False)
+            except Exception:
+                # Swallow TTS errors to avoid breaking UI
+                pass
+            finally:
+                try:
+                    if 'tmp_path' in locals() and os.path.exists(tmp_path):
+                        os.remove(tmp_path)
+                except Exception:
+                    pass
+
+    def enqueue_tts(self, text: str):
+        if not self.tts_enabled:
+            return
+        if self._tts_thread is None and self._audio_player_cmd is not None:
+            self._start_tts_thread()
+        try:
+            self._tts_queue.put_nowait(text)
+        except Exception:
+            pass
+
     def send_message(self, message: str, content_win):
         try:
             url = f"{self.storytron_url}/api/chat"
@@ -89,6 +172,8 @@ class RaspiTRON:
                 bot_response = data.get('agent_response', 'No response received')
                 content_win.addstr(f"{bot_response}\n> ")
                 self.log_action(f"Response from {data.get('active_agent', 'unknown')}: '{bot_response}'")
+                # Speak the response
+                self.enqueue_tts(bot_response)
             else:
                 error_msg = f"Server error: {response.status_code}"
                 content_win.addstr(f"{error_msg}\n> ")
@@ -212,6 +297,14 @@ class RaspiTRON:
                 if self.should_trigger_playback():
                     self.trigger_playback()
             time.sleep(0.01)
+
+        # Graceful shutdown of TTS thread
+        try:
+            if self._tts_thread is not None:
+                self._tts_queue.put_nowait(None)  # sentinel
+                self._tts_thread.join(timeout=1.0)
+        except Exception:
+            pass
 
 def main():
     app = RaspiTRON()

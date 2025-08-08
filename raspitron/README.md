@@ -8,6 +8,7 @@ Konzolové rozhraní pro PomoTRON - Minimalistická aplikace pro nevidomé pro i
 - Konfigurovatelné připojení ke StoryTRON serveru
 - Minimalistické konzolové rozhraní
 - Testování připojení a hlášení stavu
+- Volitelné čtení odpovědí nahlas pomocí gTTS
 
 ## Instalace
 
@@ -21,7 +22,14 @@ pip install -r requirements.txt
 export STORYTRON_URL="http://your-server:5000"
 ```
 
-3. Spustit aplikaci:
+3. (Volitelné) Nainstalovat audio přehrávač (jeden z):
+```bash
+sudo apt-get update && sudo apt-get install -y mpg123
+# alternativy: sudo apt-get install -y ffmpeg  # (ffplay)
+# nebo: sudo apt-get install -y mpv
+```
+
+4. Spustit aplikaci:
 ```bash
 python main.py
 ```
@@ -37,6 +45,8 @@ python main.py
 Aplikace čte následující proměnné prostředí:
 
 - `STORYTRON_URL`: URL StoryTRON serveru (výchozí: `http://localhost:5000`)
+- `RASPITRON_TTS`: Povolit TTS ("1"/"0", výchozí: povoleno)
+- `RASPITRON_TTS_LANG`: Jazyk pro gTTS (např. `en`, `cs`; výchozí: `en`)
 
 ## Architektura
 
@@ -47,10 +57,7 @@ Aplikace je strukturovaná jako jednoduché konzolové rozhraní které:
 3. Naslouchá stiskům kláves a okamžitě reaguje
 4. Poskytuje základ pro vzory interakce přátelské k nevidomým
 
-## Další kroky
+## Poznámky k TTS
 
-Toto je skeletová aplikace připravená pro implementaci:
-- Integrace hlasové syntézy
-- Systémy zvukové zpětné vazby
-- Specializované zpracování vstupu pro přístupnost
-- Komunikační protokoly se StoryTRON agenty
+- TTS používá knihovnu gTTS (Google Text-to-Speech) a lokální přehrávač (`mpg123`/`ffplay`/`mpv`).
+- Pokud není nalezen žádný přehrávač, TTS se automaticky vypne.
