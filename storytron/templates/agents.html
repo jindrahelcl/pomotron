@@ -14,7 +14,16 @@
     <div class="agent-card {% if agent.id == agents.active_agent %}active{% endif %}">
         <h3>{{ agent.name }}</h3>
         <p><strong>ID:</strong> <code>{{ agent.id }}</code></p>
-        <p><strong>Spokojen:</strong> {{ 'ANO' if agent.satisfied else 'NE' }}</p>
+        <p><strong>Spokojen:</strong> {{ '😊 ANO' if agent.satisfied else '😔 NE' }}</p>
+
+        <div style="margin-top: 10px;">
+            <form method="POST" action="{{ url_for('toggle_agent_satisfaction') }}" style="display: inline;">
+                <input type="hidden" name="agent_id" value="{{ agent.id }}">
+                <button type="submit" class="btn" style="font-size: 12px; padding: 8px 12px;">
+                    {{ 'Nasrat' if agent.satisfied else 'Uspokojit' }}
+                </button>
+            </form>
+        </div>
 
         {% if agent.id == agents.active_agent %}
             <div style="margin-top: 15px;">
@@ -35,6 +44,14 @@
     <p><strong>Aktuálně aktivní:</strong> {{ agents.active_agent }}</p>
     <p><strong>Celkem agentů:</strong> {{ agents.agents|length }}</p>
     <p><strong>Poslední aktualizace:</strong> {{ moment().format('HH:mm:ss') if moment else 'N/A' }}</p>
+
+    <div style="margin-top: 20px; border-top: 1px solid #333; padding-top: 15px;">
+        <form method="POST" action="{{ url_for('reset_story') }}" onsubmit="return confirm('Opravdu chcete resetovat celý příběh? Všichni agenti budou nespokojen a aktivní bude první agent.');">
+            <button type="submit" class="btn" style="background-color: #660000; border-color: #ff0000; color: #ff9999;">
+                🔄 Resetovat příběh
+            </button>
+        </form>
+    </div>
 </div>
 
 {% else %}

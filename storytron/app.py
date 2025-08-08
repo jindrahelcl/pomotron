@@ -94,6 +94,23 @@ def web_switch_agent():
         return redirect(url_for('web_agents'))
     return redirect(url_for('web_agents'))
 
+@app.route('/toggle-agent-satisfaction', methods=['POST'])
+def toggle_agent_satisfaction():
+    agent_id = request.form.get('agent_id')
+    if agent_id and agent_id in story.agents:
+        agent = story.agents[agent_id]
+        if agent.is_satisfied():
+            agent.reset_satisfaction()
+        else:
+            agent.mark_satisfied()
+        story._save_state()
+    return redirect(url_for('web_agents'))
+
+@app.route('/reset-story', methods=['POST'])
+def reset_story():
+    story.reset_story()
+    return redirect(url_for('web_agents'))
+
 @app.route('/api/agents', methods=['GET'])
 def list_agents():
     available_agents = story.to_listing()
@@ -114,6 +131,24 @@ def switch_agent(agent_id):
         return jsonify({
             'error': f'Agent {agent_id} not found'
         }), 404
+
+@app.route('/api/agents/<agent_id>/satisfaction', methods=['POST'])
+def toggle_agent_satisfaction_api(agent_id):
+    if agent_id not in story.agents:
+        return jsonify({'error': f'Agent {agent_id} not found'}), 404
+
+    agent = story.agents[agent_id]
+    if agent.is_satisfied():
+        agent.reset_satisfaction()
+    else:
+        agent.mark_satisfied()
+    story._save_state()
+
+    return jsonify({
+        'message': f'Agent {agent_id} satisfaction toggled',
+        'agent_id': agent_id,
+        'satisfied': agent.is_satisfied()
+    })
 
 @app.route('/api/chat', methods=['POST'])
 def chat():

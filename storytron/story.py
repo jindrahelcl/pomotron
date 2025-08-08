@@ -36,6 +36,14 @@ class Story:
             self._save_state()
         return reply
 
+    def reset_story(self):
+        """Reset story to initial state: first agent active, all agents unsatisfied."""
+        first_agent_id = list(self._agents.keys())[0]
+        self.current_id = first_agent_id
+        for agent in self._agents.values():
+            agent.reset_satisfaction()
+        self._save_state()
+
     def _decide_agent(self, current_id, agents, user_message, agent_reply, history=None):
         """Return the agent id to use for the NEXT turn.
 
