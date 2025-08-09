@@ -1,343 +1,145 @@
 #!/usr/bin/env python3
 
 import os
-import curses
-from ui import RaspiTRONUI
+import sys
 import time
 import requests
-import threading
-import queue
-import tempfile
-import subprocess
-import shutil
-from typing import Optional, List
-try:
-    from gtts import gTTS  # type: ignore
-    _GTTS_AVAILABLE = True
-except Exception:
-    _GTTS_AVAILABLE = False
-
-class TtsEngine:
-    def __init__(self, raspitron):
-        self.lang = raspitron.tts_lang
-
-class GttsEngine(TtsEngine):
-    def say(self, text, filename):
-        if not _GTTS_AVAILABLE:
-            raise RuntimeError("gTTS not available")
-
-        tts = gTTS(text=text, lang=self.lang)
-        tts.save(filename)
-
-class FestivalEngine(TtsEngine):
-    def __init__(self, voice="krb"):
-        self.voice_cmd = {
-            "krb": "(voice_czech_krb)",
-            "dita": "(voice_czech_dita)",
-            "machac": "(voice_czech_machac)",
-            "ph": "(voice_czech_ph)",
-        }.get(voice, "(voice_czech_krb)")
-
-    def say(self, text, filename):
-        encoded_text = text.encode('iso8859-2')
-        with open(filename, 'wb') as outfile:
-            text2wave_proc = subprocess.Popen(
-                ['text2wave', '-eval', self.voice_cmd],
-                stdin=subprocess.PIPE,
-                stdout=outfile
-            )
-            text2wave_proc.stdin.write(encoded_text)
-            text2wave_proc.stdin.close()
-            text2wave_proc.wait()
+import termios
+import tty
+import select
+from tts import create_tts_manager
 
 class RaspiTRON:
     def __init__(self):
         self.storytron_url = os.environ.get('STORYTRON_URL', 'https://pomotron.cz')
         self.running = True
-        self.current_line = ""
-        self.cursor_pos = 0
-        self.utf8_buffer = []
-        self.last_keypress_time = 0
-        self.playback_delay = 0.3
-        self.last_spoken_length = 0
-        self.ui = RaspiTRONUI()
+        self.tts = create_tts_manager()
 
-        # TTS config
-        self.tts_enabled = os.environ.get('RASPITRON_TTS', '1') != '0'
-        self.tts_lang = os.environ.get('RASPITRON_TTS_LANG', 'en')
-        self.tts_engine = GttsEngine(self)
-        self._tts_queue: "queue.Queue" = queue.Queue()
-        self._tts_thread: Optional[threading.Thread] = None
-        self._audio_player_cmd: Optional[List[str]] = self._detect_audio_player()
-        if self.tts_enabled and not _GTTS_AVAILABLE:
-            # gTTS is not installed; disable TTS gracefully
-            self.tts_enabled = False
-            self.ui.log_action("TTS disabled: gTTS not available")
-        if self.tts_enabled and self._audio_player_cmd is not None:
-            self._start_tts_thread()
-
-    def should_trigger_playback(self):
-        if not self.current_line.strip():
-            return False
-
-        # Only trigger if there's new content to speak
-        if len(self.current_line) <= self.last_spoken_length:
-            return False
-
-        # Immediate playback on sentence boundaries
-        if self.current_line.endswith(('.', '!', '?')):
-            return True
-
-        # Debounced playback after typing stops
-        time_since_last_key = time.time() - self.last_keypress_time
-        if time_since_last_key > self.playback_delay and len(self.current_line.strip()) > 0:
-            return True
-
-        return False
-
-    def trigger_playback(self):
-        # Only speak the new part
-        new_content = self.current_line[self.last_spoken_length:]
-        if new_content.strip():
-            self.ui.log_action(f"Playback: '{new_content}'")
-            self.last_spoken_length = len(self.current_line)
-
-    def _detect_audio_player(self) -> Optional[List[str]]:
-        # Prefer lightweight players available on Raspberry Pi / Linux
-        if shutil.which('ffplay'):
-            return ['ffplay', '-nodisp', '-autoexit', '-loglevel', 'quiet']
-        if shutil.which('mpv'):
-            return ['mpv', '--really-quiet', '--no-video']
-        return None
-
-    def _start_tts_thread(self):
-        self._tts_thread = threading.Thread(target=self._tts_worker, daemon=True)
-        self._tts_thread.start()
-
-    def _tts_worker(self):
-        while self.running:
-            try:
-                text = self._tts_queue.get(timeout=0.1)
-            except queue.Empty:
-                continue
-            if text is None:
-                break
-            if not text.strip():
-                continue
-            if self._audio_player_cmd is None:
-                # Disable TTS if no player available
-                self.tts_enabled = False
-                continue
-            try:
-                with tempfile.NamedTemporaryFile(suffix='.mp3', delete=False) as tmp_file:
-                    tmp_path = tmp_file.name
-                # Synthesize
-                self.tts_engine.say(text, tmp_path)
-                # Play
-                subprocess.run(self._audio_player_cmd + [tmp_path], check=False)
-            except Exception:
-                # Swallow TTS errors to avoid breaking UI
-                pass
-            finally:
-                try:
-                    if 'tmp_path' in locals() and os.path.exists(tmp_path):
-                        os.remove(tmp_path)
-                except Exception:
-                    pass
-
-    def enqueue_tts(self, text: str):
-        if not self.tts_enabled:
-            return
-        if self._tts_thread is None and self._audio_player_cmd is not None:
-            self._start_tts_thread()
+    def send_message(self, message: str):
+        print("\r")
+        print(f"[Sending: {message}]", file=sys.stderr, end="\r\n")
         try:
-            self._tts_queue.put_nowait(text)
-        except Exception:
-            pass
-
-    def send_message(self, message: str, content_win):
-        try:
-            url = f"{self.storytron_url}/api/chat"
-            self.ui.log_action(f"Sending to: {url}")
             response = requests.post(
-                url,
+                f"{self.storytron_url}/api/chat",
                 json={"message": message},
                 timeout=10
             )
             if response.status_code == 200:
                 data = response.json()
-                bot_response = data.get('agent_response', 'No response received')
-                try:
-                    content_win.addstr(f"{bot_response}\n> ")
-                except curses.error:
-                    # Handle window overflow gracefully
-                    content_win.scroll()
-                    content_win.addstr(f"{bot_response}\n> ")
-                self.ui.log_action(f"Response from {data.get('active_agent', 'unknown')}: '{bot_response}'")
-                # Speak the response
-                self.enqueue_tts(bot_response)
+                bot_response = data.get('agent_response', 'No response')
+                agent = data.get('active_agent', 'bot')
+                print(f"{agent}: {bot_response}", end="\r\n")
+                self.tts.say(bot_response)
             else:
-                error_msg = f"Server error: {response.status_code}"
-                try:
-                    content_win.addstr(f"{error_msg}\n> ")
-                except curses.error:
-                    content_win.scroll()
-                    content_win.addstr(f"{error_msg}\n> ")
-                self.ui.log_action(error_msg)
+                error = f"Server error: {response.status_code}"
+                print(f"{error}", end="\r\n")
         except requests.exceptions.RequestException as e:
-            error_msg = f"Connection error: {str(e)}"
-            try:
-                content_win.addstr(f"{error_msg}\n> ")
-            except curses.error:
-                content_win.scroll()
-                content_win.addstr(f"{error_msg}\n> ")
-            self.ui.log_action(error_msg)
+            error = f"Connection error: {e}"
+            print(f"{error}", end="\r\n")
 
-    def handle_keypress(self, key_code: int, content_win):
-        self.last_keypress_time = time.time()
-
-        if key_code == ord('q'):
-            self.running = False
-            self.ui.log_action("User quit application")
-            return
-
-        if key_code == ord('\n') or key_code == 10:  # Enter
-            if self.current_line.strip():  # Only send non-empty messages
-                self.ui.log_action(f"Message sent: '{self.current_line}'")
-                message = self.current_line
-                self.current_line = ""
-                self.cursor_pos = 0
-                self.last_spoken_length = 0
-                try:
-                    content_win.addstr("\n")
-                except curses.error:
-                    content_win.scroll()
-                self.send_message(message, content_win)
-            else:
-                try:
-                    content_win.addstr("\n> ")
-                except curses.error:
-                    content_win.scroll()
-                    content_win.addstr("\n> ")
-        elif key_code == 127 or key_code == 8:  # Backspace
-            if self.cursor_pos > 0:
-                deleted_char = self.current_line[self.cursor_pos-1]
-                self.current_line = self.current_line[:self.cursor_pos-1] + self.current_line[self.cursor_pos:]
-                self.cursor_pos -= 1
-                # Reset spoken length if we backspace past it
-                if self.cursor_pos < self.last_spoken_length:
-                    self.last_spoken_length = self.cursor_pos
-                self.ui.redraw_line(content_win, self.current_line, self.cursor_pos, self.last_spoken_length)
-        elif key_code == curses.KEY_LEFT:
-            if self.cursor_pos > 0:
-                self.cursor_pos -= 1
-                y, x = content_win.getyx()
-                try:
-                    content_win.move(y, x - 1)
-                except curses.error:
-                    pass
-        elif key_code == curses.KEY_RIGHT:
-            if self.cursor_pos < len(self.current_line):
-                self.cursor_pos += 1
-                y, x = content_win.getyx()
-                try:
-                    content_win.move(y, x + 1)
-                except curses.error:
-                    pass
-        elif key_code == curses.KEY_HOME:
-            self.cursor_pos = 0
-            y, x = content_win.getyx()
-            try:
-                content_win.move(y, 2)  # Move to after "> "
-            except curses.error:
-                pass
-        elif key_code == curses.KEY_END:
-            self.cursor_pos = len(self.current_line)
-            y, x = content_win.getyx()
-            try:
-                content_win.move(y, 2 + len(self.current_line))
-            except curses.error:
-                pass
-        elif 32 <= key_code <= 126:  # ASCII printable characters
-            char = chr(key_code)
-            self.current_line = self.current_line[:self.cursor_pos] + char + self.current_line[self.cursor_pos:]
-            self.cursor_pos += 1
-            self.ui.redraw_line(content_win, self.current_line, self.cursor_pos, self.last_spoken_length)
-
-            # Check for immediate playback on sentence end
-            if self.should_trigger_playback():
-                self.trigger_playback()
-
-        elif 128 <= key_code <= 255:  # UTF-8 bytes
-            self.utf8_buffer.append(key_code)
-            try:
-                # Try to decode the buffer as UTF-8
-                char = bytes(self.utf8_buffer).decode('utf-8')
-                self.current_line = self.current_line[:self.cursor_pos] + char + self.current_line[self.cursor_pos:]
-                self.cursor_pos += 1
-                self.ui.redraw_line(content_win, self.current_line, self.cursor_pos, self.last_spoken_length)
-                self.utf8_buffer = []  # Clear buffer on success
-
-                # Check for immediate playback on sentence end
-                if self.should_trigger_playback():
-                    self.trigger_playback()
-
-            except UnicodeDecodeError:
-                # Need more bytes, keep collecting
-                if len(self.utf8_buffer) > 4:  # UTF-8 max is 4 bytes
-                    self.utf8_buffer = []  # Reset if too long
-        else:
-            try:
-                content_win.addstr(f" [KEY:{key_code}]")
-            except curses.error:
-                pass  # Ignore display errors for special keys
-            self.ui.log_action(f"Special key pressed: {key_code}")
-
-        content_win.refresh()
-
-    def run(self, stdscr):
-        stdscr.nodelay(True)
-        stdscr.clear()
-
-        # Setup split windows
-        main_content, log_content = self.ui.setup_windows(stdscr)
-        main_content.nodelay(True)
-
-        # Initial messages
+    def get_char(self):
+        """Get a single character from stdin without waiting for Enter"""
+        old_settings = termios.tcgetattr(sys.stdin)
         try:
-            main_content.addstr("RaspiTRON started.\n")
-            main_content.addstr("Type something, press Enter to submit, 'q' to quit.\n")
-            main_content.addstr("> ")
-            main_content.refresh()
-        except curses.error:
-            # If initial display fails, just continue - the app can still work
-            pass
+            tty.setraw(sys.stdin.fileno())
+            if select.select([sys.stdin], [], [], 0.01)[0]:
+                return sys.stdin.read(1)
+        finally:
+            termios.tcsetattr(sys.stdin, termios.TCSADRAIN, old_settings)
+        return None
 
-        # Position log window cursor properly
-        self.ui.log_action("RaspiTRON initialized")
-        self.ui.log_action("Split window layout created")
+    def run(self):
+        print("RaspiTRON - Simple Chat Interface")
+        print("Type your message and press Enter. Type 'q' to quit.")
+        print("=" * 50)
 
-        while self.running:
-            key = main_content.getch()
-            if key != -1:
-                self.handle_keypress(key, main_content)
-            else:
-                # Check for debounced playback when no keys are pressed
-                if self.should_trigger_playback():
-                    self.trigger_playback()
-            time.sleep(0.01)
+        current_line = ""
+        cursor_pos = 0
 
-        # Graceful shutdown of TTS thread
+        def redraw_line():
+            # Clear line and redraw with cursor at correct position
+            sys.stdout.write('\r> ' + current_line)
+            # Move cursor to correct position
+            if cursor_pos < len(current_line):
+                # Move cursor back to correct position
+                move_back = len(current_line) - cursor_pos
+                sys.stdout.write('\b' * move_back)
+            sys.stdout.flush()
+
+        def handle_escape_sequence():
+            # Read the escape sequence
+            char2 = sys.stdin.read(1)
+            if ord(char2) == 91:  # '[' - standard escape sequence
+                char3 = sys.stdin.read(1)
+                key_code = ord(char3)
+                return key_code
+            return None
+
         try:
-            if self._tts_thread is not None:
-                self._tts_queue.put_nowait(None)  # sentinel
-                self._tts_thread.join(timeout=1.0)
-        except Exception:
-            pass
+            old_settings = termios.tcgetattr(sys.stdin)
+            tty.setraw(sys.stdin.fileno())
+
+            while self.running:
+                if select.select([sys.stdin], [], [], 0.01)[0]:
+                    char = sys.stdin.read(1)
+                    key_code = ord(char)
+
+                    if key_code == ord('q') and not current_line:
+                        print("\r\nGoodbye!", end="\r\n")
+                        break
+                    elif key_code == 13 or key_code == 10:  # Enter
+                        if current_line.strip():
+                            print()  # New line after input
+                            self.send_message(current_line.strip())
+                            current_line = ""
+                            cursor_pos = 0
+                            print("\r\n> ", end="", flush=True)
+                        else:
+                            print("\r\n> ", end="", flush=True)
+                    elif key_code == 127 or key_code == 8:  # Backspace
+                        if cursor_pos > 0:
+                            current_line = current_line[:cursor_pos-1] + current_line[cursor_pos:]
+                            cursor_pos -= 1
+                            redraw_line()
+                    elif key_code == 27:  # ESC - arrow keys, home, end
+                        arrow_key = handle_escape_sequence()
+                        if arrow_key == 67:  # Right arrow
+                            if cursor_pos < len(current_line):
+                                cursor_pos += 1
+                                redraw_line()
+                        elif arrow_key == 68:  # Left arrow
+                            if cursor_pos > 0:
+                                cursor_pos -= 1
+                                redraw_line()
+                        elif arrow_key == 72:  # Home
+                            cursor_pos = 0
+                            redraw_line()
+                        elif arrow_key == 70:  # End
+                            cursor_pos = len(current_line)
+                            redraw_line()
+                    elif 32 <= key_code <= 126:  # Printable characters
+                        char = chr(key_code)
+                        # Insert character at cursor position
+                        current_line = current_line[:cursor_pos] + char + current_line[cursor_pos:]
+                        cursor_pos += 1
+                        redraw_line()
+
+                        # Speak on sentence end
+                        if char in '.!?':
+                            self.tts.say(current_line)
+
+                time.sleep(0.01)
+
+        except KeyboardInterrupt:
+            print("\r\nPro ukončení stiskni q", end="\r\n")
+        finally:
+            termios.tcsetattr(sys.stdin, termios.TCSADRAIN, old_settings)
+            self.tts.shutdown()
 
 def main():
     app = RaspiTRON()
-    curses.wrapper(app.run)
+    print("\n> ", end="", flush=True)
+    app.run()
 
 if __name__ == "__main__":
     main()
