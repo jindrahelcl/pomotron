@@ -70,8 +70,26 @@ class RaspiTRON:
 
     def log_action(self, action: str):
         if self.log_content:
-            self.log_content.addstr(f" {action}\n")
-            self.log_content.refresh()
+            try:
+                # Get current window dimensions
+                max_y, max_x = self.log_content.getmaxyx()
+                cur_y, cur_x = self.log_content.getyx()
+                
+                # If we're at the bottom, scroll up
+                if cur_y >= max_y - 1:
+                    self.log_content.scroll()
+                    self.log_content.move(max_y - 1, 0)
+                
+                # Truncate message if it's too long for the window
+                message = f" {action}\n"
+                if len(message) > max_x - 1:
+                    message = message[:max_x - 4] + "...\n"
+                
+                self.log_content.addstr(message)
+                self.log_content.refresh()
+            except curses.error:
+                # Silently ignore curses errors to prevent crashes
+                pass
 
     def should_trigger_playback(self):
         if not self.current_line.strip():
@@ -170,30 +188,63 @@ class RaspiTRON:
             if response.status_code == 200:
                 data = response.json()
                 bot_response = data.get('agent_response', 'No response received')
-                content_win.addstr(f"{bot_response}\n> ")
+                try:
+                    content_win.addstr(f"{bot_response}\n> ")
+                except curses.error:
+                    # Handle window overflow gracefully
+                    content_win.scroll()
+                    content_win.addstr(f"{bot_response}\n> ")
                 self.log_action(f"Response from {data.get('active_agent', 'unknown')}: '{bot_response}'")
                 # Speak the response
                 self.enqueue_tts(bot_response)
             else:
                 error_msg = f"Server error: {response.status_code}"
-                content_win.addstr(f"{error_msg}\n> ")
+                try:
+                    content_win.addstr(f"{error_msg}\n> ")
+                except curses.error:
+                    content_win.scroll()
+                    content_win.addstr(f"{error_msg}\n> ")
                 self.log_action(error_msg)
         except requests.exceptions.RequestException as e:
             error_msg = f"Connection error: {str(e)}"
-            content_win.addstr(f"{error_msg}\n> ")
+            try:
+                content_win.addstr(f"{error_msg}\n> ")
+            except curses.error:
+                content_win.scroll()
+                content_win.addstr(f"{error_msg}\n> ")
             self.log_action(error_msg)
 
     def redraw_line(self, content_win):
-        y, x = content_win.getyx()
         try:
-            content_win.move(y, 2)  # Move to after "> "
+            y, x = content_win.getyx()
+            max_y, max_x = content_win.getmaxyx()
+            
+            # Make sure we're within bounds
+            if y >= max_y:
+                y = max_y - 1
+            
+            try:
+                content_win.move(y, 2)  # Move to after "> "
+            except curses.error:
+                pass
+            
+            content_win.clrtoeol()  # Clear rest of line
+            
+            # Truncate line if it's too long for the window
+            display_line = self.current_line
+            if len(display_line) > max_x - 3:  # Account for "> " and potential cursor
+                display_line = display_line[:max_x - 6] + "..."
+            
+            content_win.addstr(display_line)
+            
+            # Position cursor correctly
+            cursor_x = min(2 + self.cursor_pos, max_x - 1)
+            try:
+                content_win.move(y, cursor_x)
+            except curses.error:
+                pass
         except curses.error:
-            pass
-        content_win.clrtoeol()  # Clear rest of line
-        content_win.addstr(self.current_line)
-        try:
-            content_win.move(y, 2 + self.cursor_pos)  # Position cursor correctly
-        except curses.error:
+            # If any curses operation fails, just skip the redraw
             pass
 
     def handle_keypress(self, key_code: int, content_win):
@@ -211,10 +262,17 @@ class RaspiTRON:
                 self.current_line = ""
                 self.cursor_pos = 0
                 self.last_spoken_length = 0
-                content_win.addstr("\n")
+                try:
+                    content_win.addstr("\n")
+                except curses.error:
+                    content_win.scroll()
                 self.send_message(message, content_win)
             else:
-                content_win.addstr("\n> ")
+                try:
+                    content_win.addstr("\n> ")
+                except curses.error:
+                    content_win.scroll()
+                    content_win.addstr("\n> ")
         elif key_code == 127 or key_code == 8:  # Backspace
             if self.cursor_pos > 0:
                 deleted_char = self.current_line[self.cursor_pos-1]
@@ -283,7 +341,10 @@ class RaspiTRON:
                 if len(self.utf8_buffer) > 4:  # UTF-8 max is 4 bytes
                     self.utf8_buffer = []  # Reset if too long
         else:
-            content_win.addstr(f" [KEY:{key_code}]")
+            try:
+                content_win.addstr(f" [KEY:{key_code}]")
+            except curses.error:
+                pass  # Ignore display errors for special keys
             self.log_action(f"Special key pressed: {key_code}")
 
         content_win.refresh()
@@ -297,10 +358,14 @@ class RaspiTRON:
         main_content.nodelay(True)
 
         # Initial messages
-        main_content.addstr("RaspiTRON started.\n")
-        main_content.addstr("Type something, press Enter to submit, 'q' to quit.\n")
-        main_content.addstr("> ")
-        main_content.refresh()
+        try:
+            main_content.addstr("RaspiTRON started.\n")
+            main_content.addstr("Type something, press Enter to submit, 'q' to quit.\n")
+            main_content.addstr("> ")
+            main_content.refresh()
+        except curses.error:
+            # If initial display fails, just continue - the app can still work
+            pass
 
         # Position log window cursor properly
         self.log_action("RaspiTRON initialized")
