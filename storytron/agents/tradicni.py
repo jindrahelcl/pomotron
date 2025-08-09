@@ -4,7 +4,7 @@ from .base import BaseAgent
 
 class TradicniAgent(BaseAgent):
     def __init__(self):
-        super().__init__("tadicni", "Traicni Agent")
+        super().__init__("tadicni", "Tradicni Agent")
         self.client = None
         # Initialize conversation history with the system message
         self.conversation_history = [
