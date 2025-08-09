@@ -23,6 +23,11 @@ else
     echo "Using configured StoryTRON URL: $STORYTRON_URL"
 fi
 
+# Default HTTP timeout for RaspiTRON -> StoryTRON requests (seconds)
+if [ -z "$STORYTRON_TIMEOUT" ]; then
+    export STORYTRON_TIMEOUT=30
+fi
+
 # Setup virtual environment to avoid system Python restrictions (PEP 668)
 VENV_DIR="$SCRIPT_DIR/.venv"
 if [ ! -d "$VENV_DIR" ]; then

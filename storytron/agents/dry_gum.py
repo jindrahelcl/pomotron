@@ -16,15 +16,13 @@ class DryGumAgent(BaseAgent):
             return "Error: OpenAI API key not configured"
 
         try:
-            response = self.client.chat.completions.create(
-                model="gpt-3.5-turbo",
-                messages=[
+            response = self.client.responses.create(
+                model="gpt-5-mini",
+                input=[
                     {"role": "system", "content": "You are a helpful assistant for a party management system. Keep responses concise and fun."},
                     {"role": "user", "content": message}
-                ],
-                max_tokens=150,
-                temperature=0.7
+                ]
             )
-            return response.choices[0].message.content.strip()
+            return response.output_text.strip()
         except Exception as e:
             return f"Error: {str(e)}"

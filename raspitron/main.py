@@ -12,6 +12,12 @@ from tts import create_tts_manager
 class RaspiTRON:
     def __init__(self):
         self.storytron_url = os.environ.get('STORYTRON_URL', 'https://pomotron.cz')
+        # HTTP read timeout for StoryTRON requests (seconds)
+        # Can be overridden via env var STORYTRON_TIMEOUT
+        try:
+            self.request_timeout = float(os.environ.get('STORYTRON_TIMEOUT', '30'))
+        except ValueError:
+            self.request_timeout = 30.0
         self.running = True
         self.tts = create_tts_manager()
 
@@ -22,7 +28,8 @@ class RaspiTRON:
             response = requests.post(
                 f"{self.storytron_url}/api/chat",
                 json={"message": message},
-                timeout=10
+                # Separate connect and read timeouts: (connect, read)
+                timeout=(5, self.request_timeout)
             )
             if response.status_code == 200:
                 data = response.json()
