@@ -2,6 +2,7 @@
 
 import os
 import curses
+from ui import RaspiTRONUI
 import time
 import requests
 import threading
@@ -56,12 +57,10 @@ class RaspiTRON:
         self.current_line = ""
         self.cursor_pos = 0
         self.utf8_buffer = []
-        self.main_win = None
-        self.log_win = None
-        self.log_content = None
         self.last_keypress_time = 0
         self.playback_delay = 0.3
         self.last_spoken_length = 0
+        self.ui = RaspiTRONUI()
 
         # TTS config
         self.tts_enabled = os.environ.get('RASPITRON_TTS', '1') != '0'
@@ -73,57 +72,9 @@ class RaspiTRON:
         if self.tts_enabled and not _GTTS_AVAILABLE:
             # gTTS is not installed; disable TTS gracefully
             self.tts_enabled = False
-            self.log_action("TTS disabled: gTTS not available")
+            self.ui.log_action("TTS disabled: gTTS not available")
         if self.tts_enabled and self._audio_player_cmd is not None:
             self._start_tts_thread()
-
-    def setup_windows(self, stdscr):
-        height, width = stdscr.getmaxyx()
-
-        # Create main window (left half)
-        self.main_win = curses.newwin(height, width // 2, 0, 0)
-
-        # Create log window (right half)
-        self.log_win = curses.newwin(height, width - width // 2, 0, width // 2)
-
-        # Add borders
-        self.main_win.box()
-        self.log_win.box()
-
-        # Add titles
-        self.main_win.addstr(0, 2, " RaspiTRON ")
-        self.log_win.addstr(0, 2, " Action Log ")
-
-        self.main_win.refresh()
-        self.log_win.refresh()
-
-        main_content = self.main_win.derwin(height-2, width//2-2, 1, 1)
-        self.log_content = self.log_win.derwin(height-2, width-width//2-2, 1, 1)
-
-        return main_content, self.log_content
-
-    def log_action(self, action: str):
-        if self.log_content:
-            try:
-                # Get current window dimensions
-                max_y, max_x = self.log_content.getmaxyx()
-                cur_y, cur_x = self.log_content.getyx()
-                
-                # If we're at the bottom, scroll up
-                if cur_y >= max_y - 1:
-                    self.log_content.scroll()
-                    self.log_content.move(max_y - 1, 0)
-                
-                # Truncate message if it's too long for the window
-                message = f" {action}\n"
-                if len(message) > max_x - 1:
-                    message = message[:max_x - 4] + "...\n"
-                
-                self.log_content.addstr(message)
-                self.log_content.refresh()
-            except curses.error:
-                # Silently ignore curses errors to prevent crashes
-                pass
 
     def should_trigger_playback(self):
         if not self.current_line.strip():
@@ -148,7 +99,7 @@ class RaspiTRON:
         # Only speak the new part
         new_content = self.current_line[self.last_spoken_length:]
         if new_content.strip():
-            self.log_action(f"Playback: '{new_content}'")
+            self.ui.log_action(f"Playback: '{new_content}'")
             self.last_spoken_length = len(self.current_line)
 
     def _detect_audio_player(self) -> Optional[List[str]]:
@@ -207,7 +158,7 @@ class RaspiTRON:
     def send_message(self, message: str, content_win):
         try:
             url = f"{self.storytron_url}/api/chat"
-            self.log_action(f"Sending to: {url}")
+            self.ui.log_action(f"Sending to: {url}")
             response = requests.post(
                 url,
                 json={"message": message},
@@ -222,7 +173,7 @@ class RaspiTRON:
                     # Handle window overflow gracefully
                     content_win.scroll()
                     content_win.addstr(f"{bot_response}\n> ")
-                self.log_action(f"Response from {data.get('active_agent', 'unknown')}: '{bot_response}'")
+                self.ui.log_action(f"Response from {data.get('active_agent', 'unknown')}: '{bot_response}'")
                 # Speak the response
                 self.enqueue_tts(bot_response)
             else:
@@ -232,7 +183,7 @@ class RaspiTRON:
                 except curses.error:
                     content_win.scroll()
                     content_win.addstr(f"{error_msg}\n> ")
-                self.log_action(error_msg)
+                self.ui.log_action(error_msg)
         except requests.exceptions.RequestException as e:
             error_msg = f"Connection error: {str(e)}"
             try:
@@ -240,52 +191,19 @@ class RaspiTRON:
             except curses.error:
                 content_win.scroll()
                 content_win.addstr(f"{error_msg}\n> ")
-            self.log_action(error_msg)
-
-    def redraw_line(self, content_win):
-        try:
-            y, x = content_win.getyx()
-            max_y, max_x = content_win.getmaxyx()
-            
-            # Make sure we're within bounds
-            if y >= max_y:
-                y = max_y - 1
-            
-            try:
-                content_win.move(y, 2)  # Move to after "> "
-            except curses.error:
-                pass
-            
-            content_win.clrtoeol()  # Clear rest of line
-            
-            # Truncate line if it's too long for the window
-            display_line = self.current_line
-            if len(display_line) > max_x - 3:  # Account for "> " and potential cursor
-                display_line = display_line[:max_x - 6] + "..."
-            
-            content_win.addstr(display_line)
-            
-            # Position cursor correctly
-            cursor_x = min(2 + self.cursor_pos, max_x - 1)
-            try:
-                content_win.move(y, cursor_x)
-            except curses.error:
-                pass
-        except curses.error:
-            # If any curses operation fails, just skip the redraw
-            pass
+            self.ui.log_action(error_msg)
 
     def handle_keypress(self, key_code: int, content_win):
         self.last_keypress_time = time.time()
 
         if key_code == ord('q'):
             self.running = False
-            self.log_action("User quit application")
+            self.ui.log_action("User quit application")
             return
 
         if key_code == ord('\n') or key_code == 10:  # Enter
             if self.current_line.strip():  # Only send non-empty messages
-                self.log_action(f"Message sent: '{self.current_line}'")
+                self.ui.log_action(f"Message sent: '{self.current_line}'")
                 message = self.current_line
                 self.current_line = ""
                 self.cursor_pos = 0
@@ -309,7 +227,7 @@ class RaspiTRON:
                 # Reset spoken length if we backspace past it
                 if self.cursor_pos < self.last_spoken_length:
                     self.last_spoken_length = self.cursor_pos
-                self.redraw_line(content_win)
+                self.ui.redraw_line(content_win, self.current_line, self.cursor_pos, self.last_spoken_length)
         elif key_code == curses.KEY_LEFT:
             if self.cursor_pos > 0:
                 self.cursor_pos -= 1
@@ -344,7 +262,7 @@ class RaspiTRON:
             char = chr(key_code)
             self.current_line = self.current_line[:self.cursor_pos] + char + self.current_line[self.cursor_pos:]
             self.cursor_pos += 1
-            self.redraw_line(content_win)
+            self.ui.redraw_line(content_win, self.current_line, self.cursor_pos, self.last_spoken_length)
 
             # Check for immediate playback on sentence end
             if self.should_trigger_playback():
@@ -357,7 +275,7 @@ class RaspiTRON:
                 char = bytes(self.utf8_buffer).decode('utf-8')
                 self.current_line = self.current_line[:self.cursor_pos] + char + self.current_line[self.cursor_pos:]
                 self.cursor_pos += 1
-                self.redraw_line(content_win)
+                self.ui.redraw_line(content_win, self.current_line, self.cursor_pos, self.last_spoken_length)
                 self.utf8_buffer = []  # Clear buffer on success
 
                 # Check for immediate playback on sentence end
@@ -373,7 +291,7 @@ class RaspiTRON:
                 content_win.addstr(f" [KEY:{key_code}]")
             except curses.error:
                 pass  # Ignore display errors for special keys
-            self.log_action(f"Special key pressed: {key_code}")
+            self.ui.log_action(f"Special key pressed: {key_code}")
 
         content_win.refresh()
 
@@ -382,7 +300,7 @@ class RaspiTRON:
         stdscr.clear()
 
         # Setup split windows
-        main_content, log_content = self.setup_windows(stdscr)
+        main_content, log_content = self.ui.setup_windows(stdscr)
         main_content.nodelay(True)
 
         # Initial messages
@@ -396,8 +314,8 @@ class RaspiTRON:
             pass
 
         # Position log window cursor properly
-        self.log_action("RaspiTRON initialized")
-        self.log_action("Split window layout created")
+        self.ui.log_action("RaspiTRON initialized")
+        self.ui.log_action("Split window layout created")
 
         while self.running:
             key = main_content.getch()
