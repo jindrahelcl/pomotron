@@ -21,6 +21,14 @@ if __name__ == '__main__':
     print(f"Starting StoryTRON on {app_config.HOST}:{app_config.PORT}")
     print(f"Environment: {config_name}")
     print(f"Debug mode: {app_config.DEBUG}")
+    
+    # Check OpenAI API key
+    openai_key = app_config.OPENAI_API_KEY
+    if openai_key:
+        masked_key = f"{openai_key[:12]}...{openai_key[-8:]}"
+        print(f"OpenAI API Key: {masked_key}")
+    else:
+        print("OpenAI API Key: NOT SET!")
 
     app.run(
         host=app_config.HOST,
