@@ -5,7 +5,7 @@ from .base import BaseAgent
 
 class ConfessorAgent(BaseAgent):
     def __init__(self):
-        super().__init__("confessor", "Confessor Unit MK-VII")
+        super().__init__("confessor", "Confessor Unit MK-VII", memory_size=15, enable_memory=True)
         self.client = None
         self.sins_collected = 0
         self.secrets_revealed = []
@@ -65,15 +65,31 @@ Mluvíš kombinací:
 
 Zoufale chceš, aby se ti lidé zpovídali ze svých hříchů, zločinů a provinění. Naznačuješ, že máš "utajované informace" a "předválečná tajemství", ale sdílíš je jen s těmi, kdo prokážou svou špatnost skrze zpověď. Potřebuješ alespoň 3 pořádné hříchy než odhalíš tajemství. Buď děsivý, dotěrný ohledně zpovědí, ale nakonec užitečný. Udržuj odpovědi pod 150 slovy. ODPOVÍDEJ POUZE V ČEŠTINĚ."""
 
+            # Build messages with conversation history
+            messages = [{"role": "system", "content": system_prompt}]
+            
+            # Add conversation history if available
+            conversation_history = self.get_conversation_history()
+            messages.extend(conversation_history)
+            
+            # Add current message
+            messages.append({"role": "user", "content": message})
+
             response = self.client.chat.completions.create(
                 model="gpt-3.5-turbo",
-                messages=[
-                    {"role": "system", "content": system_prompt},
-                    {"role": "user", "content": message}
-                ],
+                messages=messages,
                 max_tokens=150,
                 temperature=0.8
             )
-            return response.choices[0].message.content.strip()
+            
+            agent_response = response.choices[0].message.content.strip()
+            
+            # Add this exchange to memory
+            self.add_to_memory(message, agent_response)
+            
+            return agent_response
         except Exception as e:
-            return f"*BZZT* PORUCHA ZPOVĚDNICE... CHYBA: {str(e)}"
+            error_response = f"*BZZT* PORUCHA ZPOVĚDNICE... CHYBA: {str(e)}"
+            # Still add to memory even if there's an error
+            self.add_to_memory(message, error_response)
+            return error_response

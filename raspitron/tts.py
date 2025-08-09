@@ -135,12 +135,22 @@ class TtsManager:
                 # Log errors but don't crash
                 print(f"[TTS error: {e}]", file=sys.stderr)
 
+    def _preprocess_text(self, text: str) -> str:
+        """Preprocess text before TTS synthesis"""
+        # Convert to lowercase
+        processed_text = text.lower()
+        # Remove star symbols
+        processed_text = processed_text.replace('*', '')
+        return processed_text
+
     def say(self, text: str):
         """Queue text for speech synthesis"""
         if not self.enabled:
             return
         try:
-            self._tts_queue.put_nowait(text)
+            # Preprocess text before queuing
+            processed_text = self._preprocess_text(text)
+            self._tts_queue.put_nowait(processed_text)
         except queue.Full:
             # Queue is full, skip this message
             pass
