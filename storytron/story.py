@@ -59,13 +59,20 @@ class Story:
 
     # ---- persistence ----
     def _to_state(self):
+        agents_state = {}
+        for aid, a in self._agents.items():
+            agent_state = {
+                'satisfied': getattr(a, 'satisfied', False)
+            }
+            # Add memory state if agent has memory enabled
+            memory_state = a.get_memory_state()
+            if memory_state:
+                agent_state['memory'] = memory_state
+            agents_state[aid] = agent_state
+            
         return {
             'current_id': self.current_id,
-            'agents': {
-                aid: {
-                    'satisfied': getattr(a, 'satisfied', False)
-                } for aid, a in self._agents.items()
-            }
+            'agents': agents_state
         }
 
     def _apply_state(self, data):
@@ -75,8 +82,13 @@ class Story:
             self.current_id = data['current_id']
         agents_state = data.get('agents', {})
         for aid, st in agents_state.items():
-            if aid in self._agents and 'satisfied' in st:
-                setattr(self._agents[aid], 'satisfied', st['satisfied'])
+            if aid in self._agents:
+                # Restore satisfaction state
+                if 'satisfied' in st:
+                    setattr(self._agents[aid], 'satisfied', st['satisfied'])
+                # Restore memory state
+                if 'memory' in st:
+                    self._agents[aid].set_memory_state(st['memory'])
 
     def _save_state(self):
         with open(STATE_FILE, 'w') as f:

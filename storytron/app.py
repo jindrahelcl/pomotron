@@ -209,6 +209,39 @@ def clear_history():
 
     return jsonify({'message': 'History cleared'})
 
+@app.route('/api/agents/<agent_id>/memory', methods=['GET'])
+def get_agent_memory(agent_id):
+    if agent_id not in story.agents:
+        return jsonify({'error': f'Agent {agent_id} not found'}), 404
+    
+    agent = story.agents[agent_id]
+    memory_summary = agent.get_memory_summary()
+    
+    return jsonify({
+        'agent_id': agent_id,
+        'memory_enabled': agent.enable_memory,
+        'memory_count': len(agent.conversation_memory) if agent.conversation_memory else 0,
+        'memory_size': agent.memory_size if agent.enable_memory else 0,
+        'recent_summary': memory_summary
+    })
+
+@app.route('/api/agents/<agent_id>/memory', methods=['DELETE'])
+def clear_agent_memory(agent_id):
+    if agent_id not in story.agents:
+        return jsonify({'error': f'Agent {agent_id} not found'}), 404
+    
+    agent = story.agents[agent_id]
+    if not agent.enable_memory:
+        return jsonify({'error': f'Agent {agent_id} does not have memory enabled'}), 400
+    
+    agent.clear_memory()
+    story._save_state()  # Save the cleared memory state
+    
+    return jsonify({
+        'message': f'Memory cleared for agent {agent_id}',
+        'agent_id': agent_id
+    })
+
 @app.errorhandler(404)
 def not_found(error):
     return jsonify({
