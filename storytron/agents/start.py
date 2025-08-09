@@ -26,12 +26,14 @@ class StartAgent(BaseAgent):
             # Add current message
             messages.append({"role": "user", "content": message})
 
-            response = self.client.responses.create(
-                model="gpt-5-mini",
-                input=messages
+            response = self.client.chat.completions.create(
+                model="gpt-3.5-turbo",
+                messages=messages,
+                max_tokens=150,
+                temperature=0.7
             )
             
-            agent_response = response.output_text.strip()
+            agent_response = response.choices[0].message.content.strip()
             
             # Add this exchange to memory
             self.add_to_memory(message, agent_response)
