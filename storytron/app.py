@@ -3,7 +3,7 @@ from werkzeug.middleware.proxy_fix import ProxyFix
 import os
 import jsonlines
 from datetime import datetime
-from agents import DefaultAgent, NegativeAgent, StartAgent
+from agents import DefaultAgent, NegativeAgent, StartAgent, ConfessorAgent
 from story import Story
 
 app = Flask(__name__)
@@ -49,7 +49,8 @@ def get_current_history():
 story = Story([
     DefaultAgent(),
     NegativeAgent(),
-    StartAgent()
+    StartAgent(),
+    ConfessorAgent()
 ])
 
 # Initialize state file from default if it doesn't exist
