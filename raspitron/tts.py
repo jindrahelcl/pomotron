@@ -34,7 +34,7 @@ class GttsEngine(TtsEngine):
 
 class FestivalEngine(TtsEngine):
     """Festival TTS engine for Czech"""
-    def __init__(self, voice: str = "krb"):
+    def __init__(self, voice: str = "machac"):
         super().__init__('cs')
         self.voice_cmd = {
             "krb": "(voice_czech_krb)",
@@ -44,7 +44,7 @@ class FestivalEngine(TtsEngine):
         }.get(voice, "(voice_czech_krb)")
 
     def synthesize(self, text: str, filename: str):
-        encoded_text = text.encode('iso8859-2')
+        encoded_text = text.encode('iso8859-2', errors='ignore')
         with open(filename, 'wb') as outfile:
             text2wave_proc = subprocess.Popen(
                 ['text2wave', '-eval', self.voice_cmd],
