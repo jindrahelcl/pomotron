@@ -6,6 +6,11 @@ class JoystickAgent(BaseAgent):
     def __init__(self):
         super().__init__("joystick", "Joystick Agent")
         self.client = None
+        # Initialize conversation history with the system message
+        self.conversation_history = [
+            {"role": "system", "content": "You are a helpful assistant for a party management system. Keep responses concise and fun."}
+        ]
+
         if os.environ.get('OPENAI_API_KEY'):
             self.client = openai.OpenAI(
                 api_key=os.environ.get('OPENAI_API_KEY')
@@ -16,15 +21,24 @@ class JoystickAgent(BaseAgent):
             return "Error: OpenAI API key not configured"
 
         try:
+            # Add the user message to conversation history
+            self.conversation_history.append({"role": "user", "content": message})
+
+            # Send the full conversation history to the API
             response = self.client.chat.completions.create(
                 model="gpt-3.5-turbo",
-                messages=[
-                    {"role": "system", "content": "You are a helpful assistant for a party management system. Keep responses concise and fun."},
-                    {"role": "user", "content": message}
-                ],
+                messages=self.conversation_history,
                 max_tokens=150,
                 temperature=0.7
             )
-            return response.choices[0].message.content.strip()
+
+            # Get the assistant's response
+            assistant_response = response.choices[0].message.content.strip()
+
+            # Add the assistant's response to conversation history
+            self.conversation_history.append({"role": "assistant", "content": assistant_response})
+
+            return assistant_response
         except Exception as e:
             return f"Error: {str(e)}"
+
