@@ -3,7 +3,7 @@ from werkzeug.middleware.proxy_fix import ProxyFix
 import os
 import jsonlines
 from datetime import datetime
-from agents import DefaultAgent, NegativeAgent, StartAgent, ConfessorAgent
+from agents import DefaultAgent, NegativeAgent, StartAgent, DryGumAgent, JoystickAgent, ShotOutEyeAgent, AidaAgent, WasherWomanAgent, TradicniAgent, ConfessorAgent
 from story import Story
 
 app = Flask(__name__)
@@ -50,6 +50,12 @@ story = Story([
     DefaultAgent(),
     NegativeAgent(),
     StartAgent(),
+    ShotOutEyeAgent(),
+    JoystickAgent(),
+    AidaAgent(),
+    DryGumAgent(),
+    WasherWomanAgent(),
+    TradicniAgent(),
     ConfessorAgent()
 ])
 
