@@ -25,15 +25,13 @@ class ShotOutEyeAgent(BaseAgent):
             self.conversation_history.append({"role": "user", "content": message})
 
             # Send the full conversation history to the API
-            response = self.client.chat.completions.create(
-                model="gpt-3.5-turbo",
-                messages=self.conversation_history,
-                max_tokens=150,
-                temperature=0.7
+            response = self.client.responses.create(
+                model="gpt-5-mini",
+                input=self.conversation_history
             )
 
             # Get the assistant's response
-            assistant_response = response.choices[0].message.content.strip()
+            assistant_response = response.output_text.strip()
 
             # Add the assistant's response to conversation history
             self.conversation_history.append({"role": "assistant", "content": assistant_response})
