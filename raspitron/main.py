@@ -16,6 +16,39 @@ try:
 except Exception:
     _GTTS_AVAILABLE = False
 
+class TtsEngine:
+    def __init__(self, raspitron):
+        self.lang = raspitron.tts_lang
+
+class GttsEngine(TtsEngine):
+    def say(self, text, filename):
+        if not _GTTS_AVAILABLE:
+            raise RuntimeError("gTTS not available")
+
+        tts = gTTS(text=text, lang=self.lang)
+        tts.save(filename)
+
+class FestivalEngine(TtsEngine):
+    def __init__(self, voice="krb"):
+        self.voice_cmd = {
+            "krb": "(voice_czech_krb)",
+            "dita": "(voice_czech_dita)",
+            "machac": "(voice_czech_machac)",
+            "ph": "(voice_czech_ph)",
+        }.get(voice, "(voice_czech_krb)")
+
+    def say(self, text, filename):
+        encoded_text = text.encode('iso8859-2')
+        with open(filename, 'wb') as outfile:
+            text2wave_proc = subprocess.Popen(
+                ['text2wave', '-eval', self.voice_cmd],
+                stdin=subprocess.PIPE,
+                stdout=outfile
+            )
+            text2wave_proc.stdin.write(encoded_text)
+            text2wave_proc.stdin.close()
+            text2wave_proc.wait()
+
 class RaspiTRON:
     def __init__(self):
         self.storytron_url = os.environ.get('STORYTRON_URL', 'https://pomotron.cz')
@@ -33,6 +66,7 @@ class RaspiTRON:
         # TTS config
         self.tts_enabled = os.environ.get('RASPITRON_TTS', '1') != '0'
         self.tts_lang = os.environ.get('RASPITRON_TTS_LANG', 'en')
+        self.tts_engine = GttsEngine(self)
         self._tts_queue: "queue.Queue" = queue.Queue()
         self._tts_thread: Optional[threading.Thread] = None
         self._audio_player_cmd: Optional[List[str]] = self._detect_audio_player()
@@ -119,8 +153,6 @@ class RaspiTRON:
 
     def _detect_audio_player(self) -> Optional[List[str]]:
         # Prefer lightweight players available on Raspberry Pi / Linux
-        if shutil.which('mpg123'):
-            return ['mpg123', '-q']
         if shutil.which('ffplay'):
             return ['ffplay', '-nodisp', '-autoexit', '-loglevel', 'quiet']
         if shutil.which('mpv'):
@@ -149,11 +181,7 @@ class RaspiTRON:
                 with tempfile.NamedTemporaryFile(suffix='.mp3', delete=False) as tmp_file:
                     tmp_path = tmp_file.name
                 # Synthesize
-                # Import here in case it was missing at startup but installed later
-                if not _GTTS_AVAILABLE:
-                    raise RuntimeError("gTTS not available")
-                tts = gTTS(text=text, lang=self.tts_lang)
-                tts.save(tmp_path)
+                self.tts_engine.say(text, tmp_path)
                 # Play
                 subprocess.run(self._audio_player_cmd + [tmp_path], check=False)
             except Exception:
