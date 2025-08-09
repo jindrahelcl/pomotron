@@ -185,10 +185,16 @@ class RaspiTRON:
 
     def redraw_line(self, content_win):
         y, x = content_win.getyx()
-        content_win.move(y, 2)  # Move to after "> "
+        try:
+            content_win.move(y, 2)  # Move to after "> "
+        except curses.error:
+            pass
         content_win.clrtoeol()  # Clear rest of line
         content_win.addstr(self.current_line)
-        content_win.move(y, 2 + self.cursor_pos)  # Position cursor correctly
+        try:
+            content_win.move(y, 2 + self.cursor_pos)  # Position cursor correctly
+        except curses.error:
+            pass
 
     def handle_keypress(self, key_code: int, content_win):
         self.last_keypress_time = time.time()
@@ -222,20 +228,32 @@ class RaspiTRON:
             if self.cursor_pos > 0:
                 self.cursor_pos -= 1
                 y, x = content_win.getyx()
-                content_win.move(y, x - 1)
+                try:
+                    content_win.move(y, x - 1)
+                except curses.error:
+                    pass
         elif key_code == curses.KEY_RIGHT:
             if self.cursor_pos < len(self.current_line):
                 self.cursor_pos += 1
                 y, x = content_win.getyx()
-                content_win.move(y, x + 1)
+                try:
+                    content_win.move(y, x + 1)
+                except curses.error:
+                    pass
         elif key_code == curses.KEY_HOME:
             self.cursor_pos = 0
             y, x = content_win.getyx()
-            content_win.move(y, 2)  # Move to after "> "
+            try:
+                content_win.move(y, 2)  # Move to after "> "
+            except curses.error:
+                pass
         elif key_code == curses.KEY_END:
             self.cursor_pos = len(self.current_line)
             y, x = content_win.getyx()
-            content_win.move(y, 2 + len(self.current_line))
+            try:
+                content_win.move(y, 2 + len(self.current_line))
+            except curses.error:
+                pass
         elif 32 <= key_code <= 126:  # ASCII printable characters
             char = chr(key_code)
             self.current_line = self.current_line[:self.cursor_pos] + char + self.current_line[self.cursor_pos:]
