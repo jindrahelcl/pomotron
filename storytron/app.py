@@ -248,6 +248,44 @@ def clear_agent_memory(agent_id):
         'agent_id': agent_id
     })
 
+@app.route('/api/agents/<agent_id>/history', methods=['DELETE'])
+def clear_agent_history(agent_id):
+    if agent_id not in story.agents:
+        return jsonify({'error': f'Agent {agent_id} not found'}), 404
+    
+    # Load current history
+    current_history = load_history()
+    
+    # Filter out messages from this specific agent
+    filtered_history = [entry for entry in current_history if entry.get('agent') != agent_id]
+    
+    # Save the filtered history back
+    save_history(filtered_history)
+    
+    removed_count = len(current_history) - len(filtered_history)
+    
+    return jsonify({
+        'message': f'History cleared for agent {agent_id}',
+        'agent_id': agent_id,
+        'removed_count': removed_count,
+        'remaining_count': len(filtered_history)
+    })
+
+@app.route('/api/agents/<agent_id>/history', methods=['GET'])
+def get_agent_history_count(agent_id):
+    if agent_id not in story.agents:
+        return jsonify({'error': f'Agent {agent_id} not found'}), 404
+    
+    # Load current history and count messages for this agent
+    current_history = load_history()
+    agent_history_count = sum(1 for entry in current_history if entry.get('agent') == agent_id)
+    
+    return jsonify({
+        'agent_id': agent_id,
+        'history_count': agent_history_count,
+        'total_history_count': len(current_history)
+    })
+
 @app.errorhandler(404)
 def not_found(error):
     return jsonify({

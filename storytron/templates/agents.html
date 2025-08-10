@@ -15,6 +15,7 @@
         <h3>{{ agent.name }}</h3>
         <p><strong>ID:</strong> <code>{{ agent.id }}</code></p>
         <p><strong>Spokojen:</strong> {{ '😊 ANO' if agent.satisfied else '😔 NE' }}</p>
+        <p><strong>Historie:</strong> <span id="history-count-{{ agent.id }}">...</span> zpráv</p>
 
         <div style="margin-top: 10px;">
             <form method="POST" action="{{ url_for('toggle_agent_satisfaction') }}" style="display: inline;">
@@ -23,6 +24,10 @@
                     {{ 'Nasrat' if agent.satisfied else 'Uspokojit' }}
                 </button>
             </form>
+            
+            <button type="button" class="btn" style="background-color: #006600; border-color: #00ff00; color: #99ff99; font-size: 12px; padding: 8px 12px; margin-left: 5px;" onclick="resetAgentHistory('{{ agent.id }}', '{{ agent.name }}')">
+                🗑️ Resetovat historii
+            </button>
         </div>
 
         {% if agent.id == agents.active_agent %}
@@ -46,11 +51,15 @@
     <p><strong>Poslední aktualizace:</strong> {{ moment().format('HH:mm:ss') if moment else 'N/A' }}</p>
 
     <div style="margin-top: 20px; border-top: 1px solid #333; padding-top: 15px;">
-        <form method="POST" action="{{ url_for('reset_story') }}" onsubmit="return confirm('Opravdu chcete resetovat celý příběh? Všichni agenti budou nespokojen a aktivní bude první agent.');">
+        <form method="POST" action="{{ url_for('reset_story') }}" onsubmit="return confirm('Opravdu chcete resetovat celý příběh? Všichni agenti budou nespokojen a aktivní bude první agent.');" style="display: inline;">
             <button type="submit" class="btn" style="background-color: #660000; border-color: #ff0000; color: #ff9999;">
                 🔄 Resetovat příběh
             </button>
         </form>
+        
+        <button type="button" class="btn" style="background-color: #cc6600; border-color: #ff9900; color: #ffcc99; margin-left: 10px;" onclick="resetAllHistory()">
+            🗑️ Resetovat celou historii
+        </button>
     </div>
 </div>
 
@@ -69,5 +78,87 @@
 setInterval(() => {
     location.reload();
 }, 10000);
+
+// Load history counts for all agents when page loads
+document.addEventListener('DOMContentLoaded', function() {
+    loadAllAgentHistoryCounts();
+});
+
+function loadAllAgentHistoryCounts() {
+    // Get all agent IDs from the page
+    const agentCards = document.querySelectorAll('.agent-card');
+    agentCards.forEach(card => {
+        const agentId = card.querySelector('h3').nextElementSibling.querySelector('code').textContent;
+        loadAgentHistoryCount(agentId);
+    });
+}
+
+function loadAgentHistoryCount(agentId) {
+    fetch(`/api/agents/${agentId}/history`)
+    .then(response => response.json())
+    .then(data => {
+        if (data.history_count !== undefined) {
+            const countElement = document.getElementById(`history-count-${agentId}`);
+            if (countElement) {
+                countElement.textContent = data.history_count;
+            }
+        }
+    })
+    .catch(error => {
+        console.error(`Error loading history count for agent ${agentId}:`, error);
+        const countElement = document.getElementById(`history-count-${agentId}`);
+        if (countElement) {
+            countElement.textContent = '?';
+        }
+    });
+}
+
+function resetAgentHistory(agentId, agentName) {
+    if (confirm(`Opravdu chcete vymazat historii pro agenta "${agentName}"? Tato akce je nevratná.`)) {
+        fetch(`/api/agents/${agentId}/history`, {
+            method: 'DELETE',
+            headers: {
+                'Content-Type': 'application/json',
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.message) {
+                alert(`Historie pro agenta "${agentName}" byla úspěšně vymazána! (Smazáno: ${data.removed_count} zpráv)`);
+                // Reload the page to refresh all counts
+                location.reload();
+            } else {
+                alert('Chyba při mazání historie: ' + (data.error || 'Neznámá chyba'));
+            }
+        })
+        .catch(error => {
+            alert('Chyba při mazání historie: ' + error);
+        });
+    }
+}
+
+function resetAllHistory() {
+    if (confirm('Opravdu chcete vymazat celou historii zpráv pro všechny agenty? Tato akce je nevratná.')) {
+        fetch('/api/history', {
+            method: 'DELETE',
+            headers: {
+                'Content-Type': 'application/json',
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.message) {
+                alert('Celá historie byla úspěšně vymazána!');
+                // Reload the page to refresh all counts
+                location.reload();
+            } else {
+                alert('Chyba při mazání historie: ' + (data.error || 'Neznámá chyba'));
+            }
+        })
+        .catch(error => {
+            alert('Chyba při mazání historie: ' + error);
+        });
+    }
+}
 </script>
 {% endblock %}
