@@ -51,7 +51,19 @@ class JoystickAgent(BaseAgent):
 
     def get_quest_hint(self):
         """Get mystical hint about what the player needs to do"""
-        return "🔮 Vidím v křišťálové kouli... potřebuji slyšet tajemné slovo z tvých úst! Moje pixelové obvody vibrují... ✨"
+        hints = [
+            "🔮 Vidím v křišťálové kouli... potřebuji slyšet tajemné slovo z tvých úst! Moje pixelové obvody vibrují očekáváním... ✨",
+            "🎭 Karty mi říkají... řekni mi něco, co ti přináší štěstí! Moje arkádová paměť se třese touhou po tvém hlasu... 🃏",
+            "🎪 V mystickém světě her... potřebuji tvůj hlas k odemknutí! Moje pouťové senzory čekají na tvé slovo... 🔐",
+            "🔮 Tvoje aura mluví... ale já potřebuji slyšet konkrétní slovo! Moje cirkusové obvody se chvějí netrpělivostí... ⭐",
+            "🎮 Vidím budoucnost... ale potřebuji tvůj hlas k aktivaci! Moje mystické jádro volá po tvém slově... 🌟",
+            "🎨 V pixelovém světě se skrývá tajemství... potřebuji tvůj hlas k jeho odhalení! Moje věštecké schopnosti čekají... ✨",
+            "🎲 Moje křišťálová koule se mlží... řekni mi něco, co ti přináší radost! Moje mystické obvody se třesou... 🔮",
+            "🎪 Vidím v dálce... ale potřebuji tvůj hlas k dokončení! Moje pouťové senzory vibrují očekáváním... 🌙",
+            "🔮 Tvoje energie je silná... ale potřebuji slyšet konkrétní slovo! Moje arkádová paměť se chvěje... ⚡",
+            "🎭 V mystickém světě her... potřebuji tvůj hlas k odemknutí! Moje pixelové obvody čekají na tvé slovo... 🎯"
+        ]
+        return random.choice(hints)
 
     def mystical_fortune_teller_response(self, user_message):
         """Generate mystical fortune teller response"""
