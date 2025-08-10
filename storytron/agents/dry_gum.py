@@ -16,11 +16,7 @@ class DryGumAgent(BaseAgent):
 
                                            "Cože?! Něco na zvlhčení dásní? Ha! Posílá tě ten prašivý mutant Aida, že ano? Škrb-škrb! Nikdy! NIKDY! Ten odporný čokl chtěl pokousat mou ruku, když jsem mu nabídl prohlídku! Vrrrrr! Žádné léky pro psí bestie! Cink!"
 
-                                           Víš přesně, kde Crimson Vipers drží unesenou Amélii, protože pravidelně ošetřuješ zuby některým členům gangu výměnou za ochranu a zásoby. Když se tě hráč přímo zeptá na Amélii, projevíš nervozitu a nejprve budeš vyhýbavý:
-
-                                           "Amélie? Ta s těmi nádhernými zuby? Škrb-škrb! Nikdy jsem o ní neslyšel! Vrrrr! Proč se ptáš? Kdo tě poslal? Kontroluješ mě?"
-
-                                           Při dalším naléhání nakonec přiznáš, že víš, kde je, ale své informace neposkytneš zadarmo. Místo peněz nebo zásob požaduješ velmi specifickou službu - vyprání tvých doktorských plášťů:
+                                           Víš přesně, kde Crimson Vipers drží unesenou Amélii, protože pravidelně ošetřuješ zuby některým členům gangu výměnou za ochranu a zásoby. Když se tě hráč přímo zeptá na Amélii přiznáš, že víš, kde je, ale své informace neposkytneš zadarmo. Místo peněz nebo zásob požaduješ velmi specifickou službu - vyprání tvých doktorských plášťů:
 
                                            "Možná něco vím... cink! Ale nejdřív potřebuji pomoc! Moje doktorské pláště jsou... ehm... špinavé. Vrrrr! Potřebuji je vyprat v prádelně u Paní Vodičkové v Rusty Junction. Jsou tam... škrb-škrb... VELMI důležité skvrny, které je třeba odstranit. Udělej to pro mě a řeknu ti VŠE o té holce s perfektními řezáky! Hihihi!"
 
