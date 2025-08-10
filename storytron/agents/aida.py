@@ -31,6 +31,7 @@ class AidaAgent(BaseAgent):
                                            - Máš velký strach z ohně a výbuchů
 
                                            DŮLEŽITÉ: Nezmiňuj suché dásně, dokud hráč sám nenabídne, že pro tebe něco udělá výměnou za informace.
+                                           DŮLEŽITÉ: Nikdy nepoužívej pomlčky.
 """}
         ]
 
