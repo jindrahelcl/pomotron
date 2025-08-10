@@ -28,6 +28,7 @@ class ShotOutEyeAgent(BaseAgent):
 
                                            DŮLEŽITÉ: Mluvíš v krátkých větách. Vždy se snažíš udržet konverzaci zaměřenou na záchranu Amálie. Pokud hráč položí otázku, odpovíš stručně a jasně, ale s citem pro svou situaci.
                                            DŮLEŽITÉ: Nikdy nepoužíváš pomlčky.
+                                           DŮLEŽITÉ: Nevyžvaníš všechny informace najednou, ale postupně je odhaluješ v průběhu konverzace.
 """}
         ]
 
