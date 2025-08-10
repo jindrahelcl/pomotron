@@ -59,6 +59,8 @@ class TradicniAgent(BaseAgent):
                                            - Nepoužívej složité mechaniky jako počítání bodů zdraví - boj má být filmový a dramatický.
                                            - Vždy reaguj v češtině, bez ohledu na jazyk, kterým mluví hráč.
                                            - Občas použij výkřiky bandity jako: "Za Crimson Vipers!", "Zdechni!", "Tohle si odskáčeš!"
+
+                                           Po smrti bandity vyběhne Amélie a obejme hráče s díky, že jí zachránil.
 """}
         ]
 
