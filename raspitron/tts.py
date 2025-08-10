@@ -6,8 +6,6 @@ import threading
 import queue
 import tempfile
 import subprocess
-import shutil
-from typing import Optional, List
 
 try:
     from gtts import gTTS
@@ -108,39 +106,32 @@ class TtsManager:
         while self.running:
             try:
                 text, agent = self._tts_queue.get(timeout=0.1)
-                if text is None:  # Shutdown signal
+                if text is None:
                     break
                 if not text.strip():
                     continue
 
-                # Create temporary file
                 with tempfile.NamedTemporaryFile(suffix='.mp3', delete=False) as tmp_file:
                     tmp_path = tmp_file.name
 
-                # Synthesize speech
                 self.engine.synthesize(text, tmp_path, agent)
 
-                # Play audio
                 subprocess.run(
                     self._audio_player_cmd + [tmp_path],
                     stdout=subprocess.DEVNULL,
                     stderr=subprocess.DEVNULL
                 )
 
-                # Clean up
                 os.remove(tmp_path)
 
             except queue.Empty:
                 continue
             except Exception as e:
-                # Log errors but don't crash
                 print(f"[TTS error: {e}]", file=sys.stderr)
 
     def _preprocess_text(self, text: str) -> str:
         """Preprocess text before TTS synthesis"""
-        # Convert to lowercase
         processed_text = text.lower()
-        # Remove star symbols
         processed_text = processed_text.replace('*', '')
         return processed_text
 
@@ -149,11 +140,9 @@ class TtsManager:
         if not self.enabled:
             return
         try:
-            # Preprocess text before queuing
             processed_text = self._preprocess_text(text)
             self._tts_queue.put_nowait((processed_text, agent))
         except queue.Full:
-            # Queue is full, skip this message
             pass
 
     def shutdown(self):
@@ -161,7 +150,7 @@ class TtsManager:
         self.running = False
         if self._tts_thread and self._tts_thread.is_alive():
             try:
-                self._tts_queue.put_nowait((None, None))  # Shutdown signal
+                self._tts_queue.put_nowait((None, None))
                 self._tts_thread.join(timeout=1.0)
             except:
                 pass
