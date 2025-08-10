@@ -253,6 +253,11 @@ def clear_agent_history(agent_id):
     if agent_id not in story.agents:
         return jsonify({'error': f'Agent {agent_id} not found'}), 404
     
+    # Get the agent and clear its memory/quest state
+    agent = story.agents[agent_id]
+    if agent.enable_memory:
+        agent.clear_memory()  # This will also reset quest state for joystick agent
+    
     # Load current history
     current_history = load_history()
     
