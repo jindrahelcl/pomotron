@@ -98,6 +98,7 @@ class RaspiTRON:
                     elif key_code == 13 or key_code == 10:  # Enter
                         if current_line.strip():
                             print()  # New line after input
+                            self.tts.say(current_line, agent="pomo")
                             self.send_message(current_line.strip())
                             current_line = ""
                             cursor_pos = 0
