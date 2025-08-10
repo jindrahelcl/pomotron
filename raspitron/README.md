@@ -46,7 +46,9 @@ Aplikace čte následující proměnné prostředí:
 
 - `STORYTRON_URL`: URL StoryTRON serveru (výchozí: `http://localhost:5000`)
 - `RASPITRON_TTS`: Povolit TTS ("1"/"0", výchozí: povoleno)
-- `RASPITRON_TTS_LANG`: Jazyk pro gTTS (např. `en`, `cs`; výchozí: `en`)
+- `RASPITRON_TTS_LANG`: Jazyk pro TTS (např. `en`, `cs`; výchozí: `cs`)
+- `RASPITRON_TTS_ENGINE`: TTS engine ("gtts", "festival", "gemini"; výchozí: "gtts")
+- `GOOGLE_API_KEY`: API klíč pro Google AI Studio (nutný pro gemini engine)
 
 ## Architektura
 
@@ -59,5 +61,11 @@ Aplikace je strukturovaná jako jednoduché konzolové rozhraní které:
 
 ## Poznámky k TTS
 
-- TTS používá knihovnu gTTS (Google Text-to-Speech) a lokální přehrávač (`mpg123`/`ffplay`/`mpv`).
+- TTS podporuje několik engines:
+  - **gTTS**: Google Text-to-Speech (výchozí) - bezplatný, jednoduchý
+  - **festival**: Lokální Czech TTS engine - offline, různé hlasy
+  - **gemini**: Google AI Studio native TTS s Gemini 2.5 - vysoká kvalita, různé hlasy, vyžaduje API klíč
 - Pokud není nalezen žádný přehrávač, TTS se automaticky vypne.
+- Pro gemini engine nastavte `GOOGLE_API_KEY` environment variable s vaším API klíčem z Google AI Studio.
+- Gemini engine používá nový `google-genai` package (unified Google GenAI SDK).
+- Gemini engine používá native TTS s 30 různými hlasy a automatickou detekcí jazyka (24 jazyků).
