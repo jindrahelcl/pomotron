@@ -44,10 +44,12 @@ class FestivalEngine(TtsEngine):
             "dita": "(voice_czech_dita)",
             "machac": "(voice_czech_machac)",
             "ph": "(voice_czech_ph)",
+            "mbrola": '(progn (set! mbrola_progname "/usr/bin/mbrola")(set! czech-mbrola_database "/usr/share/mbrola/cz2/cz2")(require \'czech-mbrola)(voice_czech_mbrola_cz2))',
         }.get(voice, "(voice_czech_krb)")
 
     def agent_to_voice(self, agent: str):
         return {
+            "shot_out_eye": "mbrola",
             "confessor": "krb",
             "tradicni": "dita",
             "pomo": "dita",
