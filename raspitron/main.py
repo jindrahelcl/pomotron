@@ -8,6 +8,8 @@ import termios
 import tty
 import select
 from tts import create_tts_manager
+from player import BeePlayer
+from math import pi
 
 class RaspiTRON:
     def __init__(self):
@@ -55,6 +57,13 @@ class RaspiTRON:
             termios.tcsetattr(sys.stdin, termios.TCSADRAIN, old_settings)
         return None
 
+    def beep(self):
+        player = BeePlayer(d=5, v=640/3.6, omega=2*pi*220)
+        player.open()
+        player.play(-0.02, 0.02)
+        player.close()
+
+
     def run(self):
         print("RaspiTRON - Simple Chat Interface")
         print("Type your message and press Enter. Type 'q' to quit.")
@@ -99,6 +108,7 @@ class RaspiTRON:
                     elif key_code == 13 or key_code == 10:  # Enter
                         if current_line.strip():
                             print()  # New line after input
+                            self.beep()
                             if multi_sentence or sentence_start != len(current_line):
                                 self.tts.say(current_line, agent="pomo")
                             self.send_message(current_line.strip())
@@ -107,6 +117,7 @@ class RaspiTRON:
                             sentence_start = 0
                             multi_sentence = False
                             print("\r\n> ", end="", flush=True)
+
                         else:
                             print("\r\n> ", end="", flush=True)
                     elif key_code == 127 or key_code == 8:  # Backspace
