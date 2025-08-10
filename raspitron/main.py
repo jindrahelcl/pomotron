@@ -36,7 +36,7 @@ class RaspiTRON:
                 bot_response = data.get('agent_response', 'No response')
                 agent = data.get('active_agent', 'bot')
                 print(f"{agent}: {bot_response}", end="\r\n")
-                self.tts.say(bot_response)
+                self.tts.say(bot_response, agent=agent)
             else:
                 error = f"Server error: {response.status_code}"
                 print(f"{error}", end="\r\n")
@@ -133,7 +133,7 @@ class RaspiTRON:
 
                         # Speak on sentence end
                         if char in '.!?':
-                            self.tts.say(current_line)
+                            self.tts.say(current_line, agent="pomo")
 
                 time.sleep(0.01)
 

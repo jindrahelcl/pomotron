@@ -3,7 +3,7 @@ source venv/bin/activate
 cd raspitron
 export STORYTRON_URL="https://pomotron.cz"
 export RASPITRON_TTS_LANG=cs
-export RASPITRON_TTS_ENGINE=gtts
+export RASPITRON_TTS_ENGINE=festival
 
 while true; do
 	./run.sh
