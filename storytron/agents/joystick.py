@@ -170,6 +170,15 @@ Mluvíš výhradně česky, udržuj odpovědi pod 100 slovy, buď posedlý Aidou
         
         return agent_response
 
+    def reset_quest(self):
+        """Reset quest state back to mystical mode"""
+        self.quest_completed = False
+
+    def clear_memory(self):
+        """Override to also reset quest state when memory is cleared"""
+        super().clear_memory()
+        self.reset_quest()
+
     def get_quest_status(self):
         """Get current quest status for debugging"""
         return {
