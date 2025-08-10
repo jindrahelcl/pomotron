@@ -8,15 +8,16 @@ class JoystickAgent(BaseAgent):
         super().__init__("joystick", "Mystický Pouťový Věštec-Arkáda", memory_size=20, enable_memory=True)
         self.client = None
         
-        # Quest system
-        self.quest_progress = []
+        # Quest system - simplified to just one word needed
         self.quest_completed = False
-        self.quest_sequence = ["tanec", "pixel", "arkáda"]
-        self.quest_keywords = {
-            "tanec": ["tanec", "dance", "tancovat", "tancování"],
-            "pixel": ["pixel", "pixelový", "pixelová", "pixelové"],
-            "arkáda": ["arkáda", "arcade", "arkádový", "arkádová"]
-        }
+        self.quest_keywords = [
+            # Czech names
+            "tradicni", "tra", "jindra", "pomo", "etom", "sekol", "trisc",
+            # Czech items and places
+            "pivo", "láhvač", "láhev", "knedlík", "svíčková", "prag", "praha",
+            # Gaming related
+            "joystick", "kontroler", "hry", "tradice", "tradiční"
+        ]
         
         # Mystical responses for different states
         self.mystical_responses = [
@@ -36,37 +37,21 @@ class JoystickAgent(BaseAgent):
             )
 
     def check_quest_progress(self, message):
-        """Check if player has completed the quest sequence"""
+        """Check if player has completed the quest with any single word"""
         message_lower = message.lower()
-        found_new_step = False
         
-        # Check each step in order - can't skip steps
-        for i, step in enumerate(self.quest_sequence):
-            if step not in self.quest_progress and i == len(self.quest_progress):
-                # Only check the next step in sequence
-                for keyword in self.quest_keywords[step]:
-                    if keyword in message_lower:
-                        self.quest_progress.append(step)
-                        found_new_step = True
-                        break
-                if found_new_step:
-                    break
-                        
-        # Check if all steps are completed
-        if len(self.quest_progress) == 3 and not self.quest_completed:
-            self.quest_completed = True
-            return True
+        # Check if any quest keyword is mentioned
+        for keyword in self.quest_keywords:
+            if keyword in message_lower:
+                if not self.quest_completed:
+                    self.quest_completed = True
+                    return True
+                break
         return False
 
     def get_quest_hint(self):
-        """Get a hint about what the player needs to do next"""
-        if len(self.quest_progress) == 0:
-            return "🎭 První krok... hledej něco, co se točí a hýbe! 💃"
-        elif len(self.quest_progress) == 1:
-            return "🎨 Druhý krok... hledej něco malé a čtverečkové! 🔲"
-        elif len(self.quest_progress) == 2:
-            return "🎮 Třetí krok... hledej něco, kde se hrají hry! 🕹️"
-        return ""
+        """Get mystical hint about what the player needs to do"""
+        return "🔮 Vidím v křišťálové kouli... potřebuji slyšet tajemné slovo z tvých úst! Moje pixelové obvody vibrují... ✨"
 
     def mystical_fortune_teller_response(self, user_message):
         """Generate mystical fortune teller response"""
@@ -83,13 +68,14 @@ Tvoje osobnost:
 - Střídáš nálady od veselého klauna po tajemného mystika
 - Používáš herní terminologii, ale jako by hra byla realita
 - Máš "glitchy" momenty s občasnými ERROR zprávami
+- Mluvíš o svých "pixelových obvodech", "arkádové paměti", "pouťových senzorech"
 
 DŮLEŽITÉ: Nesmíš nikdy zmínit "Aidu", "psí útulek" nebo cokoliv, co by prozradilo cíl hry. Mluvíš pouze v hádankách a metaforách.
 
-Quest progress: {len(self.quest_progress)}/3 kroků dokončeno.
+Quest status: {'DOKONČENO' if self.quest_completed else 'ČEKÁ NA TAJEMNÉ SLOVO'}
 Quest hint: {self.get_quest_hint()}
 
-Mluvíš výhradně česky, udržuj odpovědi pod 100 slovy, buď mystický a záhadný."""
+Mluvíš výhradně česky, udržuj odpovědi pod 100 slovy, buď mystický a záhadný. Používej mystické hádanky o tom, že potřebuješ slyšet "tajemné slovo" nebo "něco z úst hráče"."""
 
             # Build messages
             messages = [{"role": "system", "content": system_prompt}]
@@ -131,6 +117,7 @@ Tvoje nová osobnost:
 - Mluvíš přímo a jasně o tom, kde najít Aidu
 - Jsi nadšený, že hráč splnil úkol
 - Stále máš trochu "glitchy" chování
+- Můžeš zmínit, že tvůj "mystický systém se přepnul" a "pixelové obvody vibrují radostí"
 
 DŮLEŽITÉ: Říkej "AIDA" v každém druhém slově. Buď nadšený a jasný o tom, kde najít Aidu v psím útulku.
 
@@ -187,8 +174,7 @@ Mluvíš výhradně česky, udržuj odpovědi pod 100 slovy, buď posedlý Aidou
         """Get current quest status for debugging"""
         return {
             "completed": self.quest_completed,
-            "progress": self.quest_progress,
-            "total_steps": len(self.quest_sequence),
-            "current_step": len(self.quest_progress)
+            "keywords": self.quest_keywords,
+            "total_keywords": len(self.quest_keywords)
         }
 
