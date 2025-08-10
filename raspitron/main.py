@@ -63,6 +63,7 @@ class RaspiTRON:
         current_line = ""
         cursor_pos = 0
         sentence_start = 0
+        multi_sentence = False
 
         def redraw_line():
             # Clear line and redraw with cursor at correct position
@@ -98,11 +99,13 @@ class RaspiTRON:
                     elif key_code == 13 or key_code == 10:  # Enter
                         if current_line.strip():
                             print()  # New line after input
-                            self.tts.say(current_line, agent="pomo")
+                            if multi_sentence:
+                                self.tts.say(current_line, agent="pomo")
                             self.send_message(current_line.strip())
                             current_line = ""
                             cursor_pos = 0
                             sentence_start = 0
+                            multi_sentence = False
                             print("\r\n> ", end="", flush=True)
                         else:
                             print("\r\n> ", end="", flush=True)
@@ -138,6 +141,7 @@ class RaspiTRON:
                         # Speak on sentence end
                         if char in '.!?':
                             self.tts.say(current_line[sentence_start:], agent="pomo")
+                            multi_sentence = (sentence_start > 0)
                             sentence_start = len(current_line)
 
 
