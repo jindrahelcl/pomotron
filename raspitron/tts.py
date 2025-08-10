@@ -51,7 +51,7 @@ class FestivalEngine(TtsEngine):
         return {
             "shot_out_eye": "mbrola",
             "confessor": "krb",
-            "tradicni": "dita",
+            "tradicni": "ph",
             "pomo": "dita",
         }.get(agent, "machac")
 
