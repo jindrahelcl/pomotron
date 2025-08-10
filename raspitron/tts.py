@@ -84,7 +84,7 @@ class TtsManager:
             self.engine = GttsEngine(lang)
 
         # Setup audio player
-        self._audio_player_cmd = self._detect_audio_player()
+        self._audio_player_cmd = ['ffplay', '-nodisp', '-autoexit', '-loglevel', 'quiet']
 
         # Setup background processing
         self._tts_queue = queue.Queue()
@@ -92,24 +92,11 @@ class TtsManager:
 
         # Initialize if everything is available
         if self.enabled:
-            if not self._audio_player_cmd:
-                self.enabled = False
-                print("[TTS disabled: no audio player found]", file=sys.stderr)
-            elif engine_type == 'gtts' and not _GTTS_AVAILABLE:
+            if engine_type == 'gtts' and not _GTTS_AVAILABLE:
                 self.enabled = False
                 print("[TTS disabled: gTTS not available]", file=sys.stderr)
             else:
                 self._start_worker_thread()
-
-    def _detect_audio_player(self) -> Optional[List[str]]:
-        """Detect available audio player"""
-        if shutil.which('ffplay'):
-            return ['ffplay', '-nodisp', '-autoexit', '-loglevel', 'quiet']
-        if shutil.which('mpv'):
-            return ['mpv', '--really-quiet', '--no-video']
-        if shutil.which('mpg123'):
-            return ['mpg123', '-q']
-        return None
 
     def _start_worker_thread(self):
         """Start background TTS worker thread"""
