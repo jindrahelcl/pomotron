@@ -31,6 +31,8 @@ class AidaAgent(BaseAgent):
                                            - Často se škrábeš za uchem rukou, když přemýšlíš
                                            - Jsi teritoriální a hrdý na svůj "revír"
                                            - Máš velký strach z ohně a výbuchů
+
+                                           DŮLEŽITÉ: Nezmiňuj suché dásně, dokud hráč sám nenabídne, že pro tebe něco udělá výměnou za informace.
 """}
         ]
 
