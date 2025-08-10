@@ -50,7 +50,7 @@ class TradicniAgent(BaseAgent):
                                               - Téměř poražený: "Nepřítel těžce dýchá, krvácí z několika ran a sotva stojí na nohou."
 
                                            5. UKONČENÍ BOJE:
-                                              Po 5-7 kolech (nebo dříve, pokud hráč zasadí zvláště silný úder) označ porážku bandity:
+                                              Po 3-5 kolech (nebo dříve, pokud hráč zasadí zvláště silný úder) označ porážku bandity:
                                               "Bandita padá k zemi s bolestivým výkřikem. 'Aaarrgh! Ty... proklatej... Tohle... není konec...' chrčí, než ztrácí vědomí."
 
                                            ZVLÁŠTNÍ INSTRUKCE:
