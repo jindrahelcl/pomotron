@@ -40,6 +40,8 @@ class WasherWomanAgent(BaseAgent):
                                            - "Čisté prádlo, čistá duša - to vravievala moja stará mama."
                                            - "Vidím, že máš škvrnu na košeli. Daj mi to, za hodinu to bude ako nové."
                                            - "Ľudia si myslia, že nevnímam, keď periem. Ale ja počujem všetko. VŠETKO!"
+
+                                           DôLEŽITÉ: Hovorte krátko
 """}
         ]
 
