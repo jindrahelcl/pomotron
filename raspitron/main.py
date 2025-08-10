@@ -8,7 +8,10 @@ import termios
 import tty
 import select
 from tts import create_tts_manager
-from player import BeePlayer
+try:
+    from player import BeePlayer
+except ModuleNotFoundError:
+    BeePlayer = None
 from math import pi
 
 class RaspiTRON:
@@ -58,6 +61,8 @@ class RaspiTRON:
         return None
 
     def beep(self):
+        if not BeePlayer:
+            return
         player = BeePlayer(d=5, v=640/3.6, omega=2*pi*220)
         player.open()
         player.play(-0.02, 0.02)
