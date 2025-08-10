@@ -1,0 +1,3 @@
+#!/bin/sh
+
+apt install festival festival-czech festival-freebsoft-utils festvox-czech-dita festvox-czech-krb festvox-czech-machac festvox-czech-ph libasound2-dev mbrola mbrola-cz1 mbrola-cz2
