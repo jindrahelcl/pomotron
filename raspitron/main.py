@@ -124,7 +124,7 @@ class RaspiTRON:
                         elif arrow_key == 70:  # End
                             cursor_pos = len(current_line)
                             redraw_line()
-                    elif 32 <= key_code <= 126:  # Printable characters
+                    else:
                         char = chr(key_code)
                         # Insert character at cursor position
                         current_line = current_line[:cursor_pos] + char + current_line[cursor_pos:]
