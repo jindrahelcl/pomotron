@@ -119,15 +119,19 @@ class FestivalEngine(TtsEngine):
 class TtsManager:
     def __init__(self, lang: str = 'cs', engine_type: str = 'gtts'):
         self.running = True
-        self.enabled = os.environ.get('RASPITRON_TTS', '1') != '0'
+        self.enabled = os.environ.get('RASPITRON_TTS', '1') != '0' and engine_type != 'none'
         self.lang = lang
+        self.engine = None
 
-        if engine_type == 'festival':
-            self.engine = FestivalEngine()
-        elif engine_type == 'gemini':
-            self.engine = GeminiTtsEngine(lang)
+        if self.enabled:
+            if engine_type == 'festival':
+                self.engine = FestivalEngine()
+            elif engine_type == 'gemini':
+                self.engine = GeminiTtsEngine(lang)
+            else:
+                self.engine = GttsEngine(lang)
         else:
-            self.engine = GttsEngine(lang)
+            print("TTS Engine disabled", file=sys.stderr)
 
         self._audio_player_cmd = ['ffplay', '-nodisp', '-autoexit', '-loglevel', 'quiet']
         self._tts_queue = queue.Queue()
@@ -137,7 +141,8 @@ class TtsManager:
             self._start_worker_thread()
 
     def join(self):
-        self._tts_queue.join()
+        if self._tts_thread and self._tts_thread.is_alive():
+            self._tts_queue.join()
 
     def _start_worker_thread(self):
         self._tts_thread = threading.Thread(target=self._worker, daemon=True)
@@ -186,7 +191,11 @@ class TtsManager:
 
     def say(self, text: str, agent: str, cb=None):
         if not self.enabled:
+            # If TTS is disabled, just call the callback immediately
+            if cb:
+                cb()
             return
+
         try:
             processed_text = self._preprocess_text(text)
             self._tts_queue.put_nowait((processed_text, agent, cb))
