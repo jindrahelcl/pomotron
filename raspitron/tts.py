@@ -132,10 +132,17 @@ class OpenAiTtsEngine(TtsEngine):
 
         # Voice mapping for different agents
         self.voice_mapping = {
-            "shot_out_eye": "onyx",      # Darker, more dramatic voice
-            "confessor": "echo",         # Mystical, echoing voice
-            "tradicni": "alloy",         # Classic, neutral voice
-            "pomo": "nova",              # Friendly, modern voice
+            "shot_out_eye": "ash",
+            "confessor": "echo",
+            "tradicni": "sage",
+            "pomo": "shimmer",
+            "aida": "nova",
+            "dry_gum": "onyx",
+            "joystick": "echo",
+            "negative": "fable",
+            "start": "coral",
+            "washer_woman": "coral",
+            "default": "alloy",
         }
 
     def get_voice_for_agent(self, agent: str) -> str:
