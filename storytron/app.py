@@ -3,17 +3,24 @@ from werkzeug.middleware.proxy_fix import ProxyFix
 import os
 import jsonlines
 from datetime import datetime
+from dotenv import load_dotenv
 from agents import DefaultAgent, NegativeAgent, StartAgent, DryGumAgent, JoystickAgent, ShotOutEyeAgent, AidaAgent, WasherWomanAgent, TradicniAgent, ConfessorAgent
 from story import Story
+
+# Load environment variables from .env file
+load_dotenv()
 
 app = Flask(__name__)
 app.wsgi_app = ProxyFix(
     app.wsgi_app, x_for=1, x_proto=1, x_host=1, x_prefix=1
 )
 
-app.config['DEBUG'] = os.environ.get('DEBUG', 'False').lower() == 'true'
+# Configuration from environment variables
 app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'dev-secret-key-change-in-production')
 app.config['APPLICATION_ROOT'] = '/'
+app.config['HOST'] = os.environ.get('HOST', '0.0.0.0')
+app.config['PORT'] = int(os.environ.get('PORT', 5000))
+app.config['OPENAI_API_KEY'] = os.environ.get('OPENAI_API_KEY')
 
 HISTORY_FILE = os.environ.get('HISTORY_FILE', 'message_history.jsonl')
 
@@ -219,10 +226,10 @@ def clear_history():
 def get_agent_memory(agent_id):
     if agent_id not in story.agents:
         return jsonify({'error': f'Agent {agent_id} not found'}), 404
-    
+
     agent = story.agents[agent_id]
     memory_summary = agent.get_memory_summary()
-    
+
     return jsonify({
         'agent_id': agent_id,
         'memory_enabled': agent.enable_memory,
@@ -235,14 +242,14 @@ def get_agent_memory(agent_id):
 def clear_agent_memory(agent_id):
     if agent_id not in story.agents:
         return jsonify({'error': f'Agent {agent_id} not found'}), 404
-    
+
     agent = story.agents[agent_id]
     if not agent.enable_memory:
         return jsonify({'error': f'Agent {agent_id} does not have memory enabled'}), 400
-    
+
     agent.clear_memory()
     story._save_state()  # Save the cleared memory state
-    
+
     return jsonify({
         'message': f'Memory cleared for agent {agent_id}',
         'agent_id': agent_id
@@ -252,23 +259,23 @@ def clear_agent_memory(agent_id):
 def clear_agent_history(agent_id):
     if agent_id not in story.agents:
         return jsonify({'error': f'Agent {agent_id} not found'}), 404
-    
+
     # Get the agent and clear its memory/quest state
     agent = story.agents[agent_id]
     if agent.enable_memory:
         agent.clear_memory()  # This will also reset quest state for joystick agent
-    
+
     # Load current history
     current_history = load_history()
-    
+
     # Filter out messages from this specific agent
     filtered_history = [entry for entry in current_history if entry.get('agent') != agent_id]
-    
+
     # Save the filtered history back
     save_history(filtered_history)
-    
+
     removed_count = len(current_history) - len(filtered_history)
-    
+
     return jsonify({
         'message': f'History cleared for agent {agent_id}',
         'agent_id': agent_id,
@@ -280,11 +287,11 @@ def clear_agent_history(agent_id):
 def get_agent_history_count(agent_id):
     if agent_id not in story.agents:
         return jsonify({'error': f'Agent {agent_id} not found'}), 404
-    
+
     # Load current history and count messages for this agent
     current_history = load_history()
     agent_history_count = sum(1 for entry in current_history if entry.get('agent') == agent_id)
-    
+
     return jsonify({
         'agent_id': agent_id,
         'history_count': agent_history_count,
@@ -306,6 +313,4 @@ def internal_error(error):
     }), 500
 
 if __name__ == '__main__':
-    port = int(os.environ.get('PORT', 5000))
-    host = os.environ.get('HOST', '0.0.0.0')
-    app.run(host=host, port=port, debug=app.config['DEBUG'])
+    app.run(host=app.config['HOST'], port=app.config['PORT'], debug=False)
