@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
 import os
+import platform
 import requests
 from tts import create_tts_manager
 try:
@@ -9,7 +10,16 @@ except ModuleNotFoundError:
     BeePlayer = None
 from math import pi
 import threading
-import geiger
+
+# Only import geiger on non-Windows platforms
+if platform.system() != 'Windows':
+    try:
+        import geiger
+    except ModuleNotFoundError:
+        geiger = None
+else:
+    geiger = None
+
 from terminal import TerminalInterface
 
 class RaspiTRON:
@@ -28,13 +38,20 @@ class RaspiTRON:
     def send_message(self, message: str):
         self.terminal.print_message(f"[Sending: {message}]")
         stop_event = threading.Event()
-        geiger_thread = threading.Thread(target=geiger.run, args=(stop_event,))
-        geiger_thread.start()
+
+        # Only start geiger thread if geiger module is available
+        geiger_thread = None
+        if geiger:
+            geiger_thread = threading.Thread(target=geiger.run, args=(stop_event,))
+            geiger_thread.start()
+
         def stop_geiger(success=True):
             stop_event.set()
-            geiger_thread.join()
+            if geiger_thread:
+                geiger_thread.join()
             if success:
                 self.beep()
+
         data = None
         try:
             response = requests.post(
