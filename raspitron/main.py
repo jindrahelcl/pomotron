@@ -13,6 +13,8 @@ try:
 except ModuleNotFoundError:
     BeePlayer = None
 from math import pi
+import threading
+import geiger
 
 class RaspiTRON:
     def __init__(self):
@@ -29,6 +31,15 @@ class RaspiTRON:
     def send_message(self, message: str):
         print("\r")
         print(f"[Sending: {message}]", file=sys.stderr, end="\r\n")
+        stop_event = threading.Event()
+        geiger_thread = threading.Thread(target=geiger.run, args=(stop_event,))
+        geiger_thread.start()
+        def stop_geiger(success=True):
+            stop_event.set()
+            geiger_thread.join()
+            if success:
+                self.beep()
+        data = None
         try:
             response = requests.post(
                 f"{self.storytron_url}/api/chat",
@@ -38,16 +49,23 @@ class RaspiTRON:
             )
             if response.status_code == 200:
                 data = response.json()
-                bot_response = data.get('agent_response', 'No response')
-                agent = data.get('active_agent', 'bot')
-                print(f"{agent}: {bot_response}", end="\r\n")
-                self.tts.say(bot_response, agent=agent)
             else:
                 error = f"Server error: {response.status_code}"
                 print(f"{error}", end="\r\n")
         except requests.exceptions.RequestException as e:
             error = f"Connection error: {e}"
             print(f"{error}", end="\r\n")
+
+        if data:
+            bot_response = data.get('agent_response', 'No response')
+            agent = data.get('active_agent', 'bot')
+            print(f"{agent}: {bot_response}", end="\r\n")
+            self.tts.say(bot_response, agent=agent, cb=stop_geiger)
+        else:
+            stop_geiger(beep=False)
+
+        # Wait for the tts to say what it wants to say
+        self.tts.join()
 
     def get_char(self):
         """Get a single character from stdin without waiting for Enter"""
@@ -113,9 +131,9 @@ class RaspiTRON:
                     elif key_code == 13 or key_code == 10:  # Enter
                         if current_line.strip():
                             print()  # New line after input
-                            self.beep()
                             if multi_sentence or sentence_start != len(current_line):
                                 self.tts.say(current_line, agent="pomo")
+                            self.tts.join()
                             self.send_message(current_line.strip())
                             current_line = ""
                             cursor_pos = 0

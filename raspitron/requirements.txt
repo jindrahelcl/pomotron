@@ -2,3 +2,5 @@ requests
 gTTS
 pyalsaaudio
 google-genai
+numpy
+scipy

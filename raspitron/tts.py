@@ -136,6 +136,9 @@ class TtsManager:
         if self.enabled:
             self._start_worker_thread()
 
+    def join(self):
+        self._tts_queue.join()
+
     def _start_worker_thread(self):
         self._tts_thread = threading.Thread(target=self._worker, daemon=True)
         self._tts_thread.start()
@@ -143,7 +146,7 @@ class TtsManager:
     def _worker(self):
         while self.running:
             try:
-                text, agent = self._tts_queue.get(timeout=0.1)
+                text, agent, cb = self._tts_queue.get(timeout=0.1)
                 if text is None:
                     break
                 if not text.strip():
@@ -158,6 +161,9 @@ class TtsManager:
 
                 self.engine.synthesize(text, tmp_path, agent)
 
+                if cb:
+                    cb()
+
                 subprocess.run(
                     self._audio_player_cmd + [tmp_path],
                     stdout=subprocess.DEVNULL,
@@ -165,6 +171,8 @@ class TtsManager:
                 )
 
                 os.remove(tmp_path)
+
+                self._tts_queue.task_done()
 
             except queue.Empty:
                 continue
@@ -176,12 +184,12 @@ class TtsManager:
         processed_text = processed_text.replace('*', '')
         return processed_text
 
-    def say(self, text: str, agent: str):
+    def say(self, text: str, agent: str, cb=None):
         if not self.enabled:
             return
         try:
             processed_text = self._preprocess_text(text)
-            self._tts_queue.put_nowait((processed_text, agent))
+            self._tts_queue.put_nowait((processed_text, agent, cb))
         except queue.Full:
             pass
 
@@ -189,7 +197,7 @@ class TtsManager:
         self.running = False
         if self._tts_thread and self._tts_thread.is_alive():
             try:
-                self._tts_queue.put_nowait((None, None))
+                self._tts_queue.put_nowait((None, None, None))
                 self._tts_thread.join(timeout=1.0)
             except:
                 pass
