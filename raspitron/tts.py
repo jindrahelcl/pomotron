@@ -7,10 +7,13 @@ import queue
 import tempfile
 import subprocess
 import wave
+import asyncio
 
 from gtts import gTTS
 from google import genai
 from google.genai import types
+from openai import AsyncOpenAI
+from openai.helpers import LocalAudioPlayer
 
 class TtsEngine:
     """Base TTS engine interface"""
@@ -116,6 +119,62 @@ class FestivalEngine(TtsEngine):
             text2wave_proc.stdin.close()
             text2wave_proc.wait()
 
+class OpenAiTtsEngine(TtsEngine):
+    """OpenAI TTS engine with real-time streaming"""
+    def __init__(self, lang: str = 'cs', api_key: str = None):
+        super().__init__(lang)
+
+        api_key = api_key or os.environ.get('OPENAI_API_KEY')
+        if not api_key:
+            raise RuntimeError("OPENAI_API_KEY environment variable not set")
+
+        self.client = AsyncOpenAI(api_key=api_key)
+
+        # Voice mapping for different agents
+        self.voice_mapping = {
+            "shot_out_eye": "onyx",      # Darker, more dramatic voice
+            "confessor": "echo",         # Mystical, echoing voice
+            "tradicni": "alloy",         # Classic, neutral voice
+            "pomo": "nova",              # Friendly, modern voice
+        }
+
+    def get_voice_for_agent(self, agent: str) -> str:
+        return self.voice_mapping.get(agent, "alloy")
+
+    def synthesize(self, text: str, filename: str, agent: str):
+        """Synthesize text to audio file using OpenAI TTS"""
+        # Run async synthesis in sync context
+        asyncio.run(self._async_synthesize(text, filename, agent))
+
+    async def _async_synthesize(self, text: str, filename: str, agent: str):
+        """Async synthesis method"""
+        voice_name = self.get_voice_for_agent(agent)
+
+        response = await self.client.audio.speech.create(
+            model="tts-1",
+            voice=voice_name,
+            input=text,
+            response_format="wav"
+        )
+
+        # Save the audio content to file
+        with open(filename, 'wb') as f:
+            f.write(response.content)
+
+    async def synthesize_and_play_streaming(self, text: str, agent: str):
+        """Synthesize and play audio in real-time streaming mode"""
+        voice_name = self.get_voice_for_agent(agent)
+
+        async with self.client.audio.speech.with_streaming_response.create(
+            model="tts-1",
+            voice=voice_name,
+            input=text,
+            response_format="pcm",  # PCM works best with LocalAudioPlayer
+            stream_format="audio"
+        ) as response:
+            player = LocalAudioPlayer()
+            await player.play(response)
+
 class TtsManager:
     def __init__(self, lang: str = 'cs', engine_type: str = 'gtts'):
         self.running = True
@@ -128,11 +187,14 @@ class TtsManager:
                 self.engine = FestivalEngine()
             elif engine_type == 'gemini':
                 self.engine = GeminiTtsEngine(lang)
+            elif engine_type == 'openai':
+                self.engine = OpenAiTtsEngine(lang)
             else:
                 self.engine = GttsEngine(lang)
         else:
             print("TTS Engine disabled", file=sys.stderr)
 
+        #self._audio_player_cmd = [r"c:\\Program Files\\VideoLAN\\VLC\\vlc.exe", "--play-and-exit", "--intf", "dummy"]
         self._audio_player_cmd = ['ffplay', '-nodisp', '-autoexit', '-loglevel', 'quiet']
         self._tts_queue = queue.Queue()
         self._tts_thread = None
@@ -151,31 +213,30 @@ class TtsManager:
     def _worker(self):
         while self.running:
             try:
-                text, agent, cb = self._tts_queue.get(timeout=0.1)
+                queue_item = self._tts_queue.get(timeout=0.1)
+
+                # Handle both old format (text, agent, cb) and new format (text, agent, cb, streaming)
+                if len(queue_item) == 4:
+                    text, agent, cb, use_streaming = queue_item
+                else:
+                    text, agent, cb = queue_item
+                    use_streaming = False
+
                 if text is None:
                     break
                 if not text.strip():
                     continue
 
-                if isinstance(self.engine, GeminiTtsEngine):
-                    with tempfile.NamedTemporaryFile(suffix='.wav', delete=False) as tmp_file:
-                        tmp_path = tmp_file.name
+                # Use streaming mode for OpenAI if requested
+                if use_streaming and isinstance(self.engine, OpenAiTtsEngine):
+                    # Run streaming synthesis
+                    asyncio.run(self.engine.synthesize_and_play_streaming(text, agent))
+
+                    if cb:
+                        cb()
                 else:
-                    with tempfile.NamedTemporaryFile(suffix='.wav', delete=False) as tmp_file:
-                        tmp_path = tmp_file.name
-
-                self.engine.synthesize(text, tmp_path, agent)
-
-                if cb:
-                    cb()
-
-                subprocess.run(
-                    self._audio_player_cmd + [tmp_path],
-                    stdout=subprocess.DEVNULL,
-                    stderr=subprocess.DEVNULL
-                )
-
-                os.remove(tmp_path)
+                    # Regular synthesis for all other cases
+                    self._regular_synthesis(text, agent, cb)
 
                 self._tts_queue.task_done()
 
@@ -184,12 +245,34 @@ class TtsManager:
             except Exception as e:
                 print(f"[TTS error: {e}]", file=sys.stderr)
 
+    def _regular_synthesis(self, text: str, agent: str, cb):
+        """Regular file-based synthesis and playback"""
+        if isinstance(self.engine, GeminiTtsEngine):
+            with tempfile.NamedTemporaryFile(suffix='.wav', delete=False) as tmp_file:
+                tmp_path = tmp_file.name
+        else:
+            with tempfile.NamedTemporaryFile(suffix='.wav', delete=False) as tmp_file:
+                tmp_path = tmp_file.name
+
+        self.engine.synthesize(text, tmp_path, agent)
+
+        if cb:
+            cb()
+
+        subprocess.run(
+            self._audio_player_cmd + [tmp_path],
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL
+        )
+
+        os.remove(tmp_path)
+
     def _preprocess_text(self, text: str) -> str:
         processed_text = text.lower()
         processed_text = processed_text.replace('*', '')
         return processed_text
 
-    def say(self, text: str, agent: str, cb=None):
+    def say(self, text: str, agent: str, cb=None, use_streaming=False):
         if not self.enabled:
             # If TTS is disabled, just call the callback immediately
             if cb:
@@ -198,7 +281,12 @@ class TtsManager:
 
         try:
             processed_text = self._preprocess_text(text)
-            self._tts_queue.put_nowait((processed_text, agent, cb))
+
+            # Use streaming mode for OpenAI if requested and available
+            if use_streaming and isinstance(self.engine, OpenAiTtsEngine):
+                self._tts_queue.put_nowait((processed_text, agent, cb, True))
+            else:
+                self._tts_queue.put_nowait((processed_text, agent, cb, False))
         except queue.Full:
             pass
 
@@ -206,7 +294,7 @@ class TtsManager:
         self.running = False
         if self._tts_thread and self._tts_thread.is_alive():
             try:
-                self._tts_queue.put_nowait((None, None, None))
+                self._tts_queue.put_nowait((None, None, None, False))
                 self._tts_thread.join(timeout=1.0)
             except:
                 pass
