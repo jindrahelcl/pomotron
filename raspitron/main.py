@@ -14,7 +14,8 @@ except ModuleNotFoundError:
     BeePlayer = None
 from math import pi
 import threading
-import geiger
+if os.environ.get('DISABLE_GEIGER', '0') != "1":
+    import geiger
 
 class RaspiTRON:
     def __init__(self):
