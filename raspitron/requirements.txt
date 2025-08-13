@@ -4,3 +4,4 @@ pyalsaaudio
 google-genai
 numpy
 scipy
+prompt-toolkit

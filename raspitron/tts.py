@@ -8,6 +8,7 @@ import tempfile
 import subprocess
 import wave
 import asyncio
+import string
 
 from gtts import gTTS
 from google import genai
@@ -288,6 +289,9 @@ class TtsManager:
 
         try:
             processed_text = self._preprocess_text(text)
+            # gtts throws at inputs like "."
+            if not any(char in string.ascii_letters+string.digits for char in processed_text):
+                return
 
             # Use streaming mode for OpenAI if requested and available
             if use_streaming and isinstance(self.engine, OpenAiTtsEngine):
