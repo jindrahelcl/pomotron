@@ -74,7 +74,6 @@ class RaspiTRON:
     def sentence_cb(self, sentence):
         self.tts.say(sentence, agent="pomo")
         self.last_read = sentence
-        raise Exception
 
     def run(self):
         self.running = True
