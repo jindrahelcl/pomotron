@@ -40,6 +40,7 @@ class GeminiTtsEngine(TtsEngine):
         self.client = genai.Client(api_key=api_key)
 
         self.voice_mapping = {
+            "dry_gum": "Algieba",
             "shot_out_eye": "Fenrir",
             "confessor": "Charon",
             "tradicni": "Orus",
