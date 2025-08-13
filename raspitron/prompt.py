@@ -1,6 +1,8 @@
 from prompt_toolkit import PromptSession
 from prompt_toolkit.key_binding import KeyBindings
 
+PUNCT = ".!?"
+
 # Helper class to make exceptions from keypress handlers propagate
 class HandlerError(KeyboardInterrupt):
     def __init__(self, error):
@@ -19,7 +21,7 @@ class Session:
     def __init__(self, sentence_cb):
         self.sentence_cb = sentence_cb
         kb = KeyBindings()
-        for char in ".!?":
+        for char in PUNCT:
             kb.add(char)(self.onpunctuation)
         self.prompt_session = PromptSession(key_bindings=kb)
 
@@ -35,8 +37,8 @@ class Session:
 
     def extract_sentence(self, buffer_text, cursor_pos):
         text = buffer_text[:cursor_pos - 1]
-        rev_iter = zip(reversed(text), reversed(range(len(text))))
-        start = 1 + next((pos for ch, pos in rev_iter if ch in '.!?'), -1)
+        rev = zip(reversed(text), reversed(range(len(text))))
+        start = 1 + next((pos for ch, pos in rev if ch in PUNCT), -1)
         return buffer_text[start:cursor_pos]
 
     def prompt(self):
