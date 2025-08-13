@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 
+from dotenv import load_dotenv
 import os
 import sys
 import requests
@@ -19,6 +20,8 @@ else:
     def run(stop_event):
         stop_event.wait()
     geiger.run = run
+
+load_dotenv()
 
 class RaspiTRON:
     def __init__(self):

@@ -6,3 +6,4 @@ numpy
 scipy
 prompt-toolkit
 openai
+dotenv
