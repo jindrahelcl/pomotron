@@ -53,26 +53,29 @@ def append_to_history(entry):
 def get_current_history():
     return load_history()
 
-story = Story([
-    DefaultAgent(),
-    NegativeAgent(),
-    StartAgent(),
-    ShotOutEyeAgent(),
-    JoystickAgent(),
-    AidaAgent(),
-    DryGumAgent(),
-    WasherWomanAgent(),
-    TradicniAgent(),
-    ConfessorAgent()
-])
+def get_story():
+    """Get a fresh story instance with loaded state for each request."""
+    story = Story([
+        DefaultAgent(),
+        NegativeAgent(),
+        StartAgent(),
+        ShotOutEyeAgent(),
+        JoystickAgent(),
+        AidaAgent(),
+        DryGumAgent(),
+        WasherWomanAgent(),
+        TradicniAgent(),
+        ConfessorAgent()
+    ])
 
-# Initialize state file from default if it doesn't exist
-if not os.path.exists('story_state.json'):
-    if os.path.exists('default_story_state.json'):
-        import shutil
-        shutil.copy('default_story_state.json', 'story_state.json')
+    # Initialize state file from default if it doesn't exist
+    if not os.path.exists('story_state.json'):
+        if os.path.exists('default_story_state.json'):
+            import shutil
+            shutil.copy('default_story_state.json', 'story_state.json')
 
-story.load_state()
+    story.load_state()
+    return story
 
 @app.route('/')
 def pomo_interface():
@@ -85,6 +88,7 @@ def keep_alive():
 
 @app.route('/web')
 def dashboard():
+    story = get_story()
     available_agents = story.to_listing()
     status = {
         'status': 'alive',
@@ -99,6 +103,7 @@ def dashboard():
 
 @app.route('/web/agents')
 def web_agents():
+    story = get_story()
     available_agents = story.to_listing()
     return render_template('agents.html',
                          agents={'agents': available_agents, 'active_agent': story.current_id})
@@ -109,6 +114,7 @@ def web_history():
 
 @app.route('/switch-agent', methods=['POST'])
 def web_switch_agent():
+    story = get_story()
     agent_id = request.form.get('agent_id')
     if agent_id and agent_id in story.agents:
         story.set_active(agent_id)
@@ -117,6 +123,7 @@ def web_switch_agent():
 
 @app.route('/toggle-agent-satisfaction', methods=['POST'])
 def toggle_agent_satisfaction():
+    story = get_story()
     agent_id = request.form.get('agent_id')
     if agent_id and agent_id in story.agents:
         agent = story.agents[agent_id]
@@ -129,11 +136,13 @@ def toggle_agent_satisfaction():
 
 @app.route('/reset-story', methods=['POST'])
 def reset_story():
+    story = get_story()
     story.reset_story()
     return redirect(url_for('web_agents'))
 
 @app.route('/api/agents', methods=['GET'])
 def list_agents():
+    story = get_story()
     available_agents = story.to_listing()
     return jsonify({
         'agents': available_agents,
@@ -142,6 +151,7 @@ def list_agents():
 
 @app.route('/api/agents/<agent_id>/activate', methods=['POST'])
 def switch_agent(agent_id):
+    story = get_story()
     if agent_id in story.agents:
         story.set_active(agent_id)
         return jsonify({
@@ -155,6 +165,7 @@ def switch_agent(agent_id):
 
 @app.route('/api/agents/<agent_id>/satisfaction', methods=['POST'])
 def toggle_agent_satisfaction_api(agent_id):
+    story = get_story()
     if agent_id not in story.agents:
         return jsonify({'error': f'Agent {agent_id} not found'}), 404
 
@@ -173,6 +184,7 @@ def toggle_agent_satisfaction_api(agent_id):
 
 @app.route('/api/chat', methods=['POST'])
 def chat():
+    story = get_story()
     data = request.get_json()
 
     if not data or 'message' not in data:
@@ -224,6 +236,7 @@ def clear_history():
 
 @app.route('/api/agents/<agent_id>/memory', methods=['GET'])
 def get_agent_memory(agent_id):
+    story = get_story()
     if agent_id not in story.agents:
         return jsonify({'error': f'Agent {agent_id} not found'}), 404
 
@@ -240,6 +253,7 @@ def get_agent_memory(agent_id):
 
 @app.route('/api/agents/<agent_id>/memory', methods=['DELETE'])
 def clear_agent_memory(agent_id):
+    story = get_story()
     if agent_id not in story.agents:
         return jsonify({'error': f'Agent {agent_id} not found'}), 404
 
@@ -257,6 +271,7 @@ def clear_agent_memory(agent_id):
 
 @app.route('/api/agents/<agent_id>/history', methods=['DELETE'])
 def clear_agent_history(agent_id):
+    story = get_story()
     if agent_id not in story.agents:
         return jsonify({'error': f'Agent {agent_id} not found'}), 404
 
@@ -285,6 +300,7 @@ def clear_agent_history(agent_id):
 
 @app.route('/api/agents/<agent_id>/history', methods=['GET'])
 def get_agent_history_count(agent_id):
+    story = get_story()
     if agent_id not in story.agents:
         return jsonify({'error': f'Agent {agent_id} not found'}), 404
 
