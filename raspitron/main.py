@@ -13,6 +13,12 @@ from math import pi
 import threading
 if os.environ.get('DISABLE_GEIGER', '0') != "1":
     import geiger
+else:
+    import types
+    geiger = types.ModuleType("geiger")
+    def run(stop_event):
+        stop_event.wait()
+    geiger.run = run
 
 class RaspiTRON:
     def __init__(self):
