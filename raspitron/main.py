@@ -83,12 +83,11 @@ class RaspiTRON:
         self.last_read = sentence
 
     def run(self):
-        self.running = True
         self.tts = create_tts_manager()
         self.session = Session(self.sentence_cb)
         try:
             self.last_read = ""
-            while self.running:
+            while True:
                 line = self.session.prompt().strip()
                 if not line:
                     continue
