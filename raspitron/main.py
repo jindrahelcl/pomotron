@@ -72,6 +72,7 @@ class RaspiTRON:
         player.close()
 
     def sentence_cb(self, sentence):
+        sentence = sentence.strip()
         self.tts.say(sentence, agent="pomo")
         self.last_read = sentence
 
@@ -82,11 +83,13 @@ class RaspiTRON:
         try:
             self.last_read = ""
             while self.running:
-                line = self.session.prompt()
+                line = self.session.prompt().strip()
+                if not line:
+                    continue
                 if line != self.last_read:
                     self.tts.say(line, agent="pomo")
                 self.tts.join()
-                self.send_message(line.strip())
+                self.send_message(line)
         except EOFError:
             pass
         finally:

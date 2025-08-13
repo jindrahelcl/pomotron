@@ -45,4 +45,4 @@ class Session:
         except HandlerError as e:
             raise e.error
         except KeyboardInterrupt:
-            pass
+            return ""
