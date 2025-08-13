@@ -1,6 +1,7 @@
 import os
 import openai
 from .base import BaseAgent
+from .prompt_loader import load_prompt
 
 class StartAgent(BaseAgent):
     def __init__(self):
@@ -16,13 +17,14 @@ class StartAgent(BaseAgent):
             return "Error: OpenAI API key not configured"
 
         try:
-            # Build messages with conversation history
-            messages = [{"role": "system", "content": "You are a helpful assistant for a party management system. Keep responses concise and fun."}]
-            
+            # Build messages with system prompt from file and conversation history
+            system_prompt = load_prompt("start")
+            messages = [{"role": "system", "content": system_prompt}]
+
             # Add conversation history if available
             conversation_history = self.get_conversation_history()
             messages.extend(conversation_history)
-            
+
             # Add current message
             messages.append({"role": "user", "content": message})
 
@@ -30,12 +32,12 @@ class StartAgent(BaseAgent):
                 model="gpt-5-mini",
                 input=messages
             )
-            
+
             agent_response = response.output_text.strip()
-            
+
             # Add this exchange to memory
             self.add_to_memory(message, agent_response)
-            
+
             return agent_response
         except Exception as e:
             error_response = f"Error: {str(e)}"

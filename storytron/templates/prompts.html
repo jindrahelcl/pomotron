@@ -1,0 +1,173 @@
+{% extends "base.html" %}
+
+{% block title %}Agent Prompts - StoryTRON{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-md-4">
+            <h2>Agent Prompts</h2>
+            <p class="text-muted">Edit system prompts for your agents</p>
+
+            <div class="list-group" id="prompt-list">
+                {% for prompt in prompts %}
+                <button type="button"
+                        class="list-group-item list-group-item-action prompt-item"
+                        data-agent-id="{{ prompt.agent_id }}"
+                        onclick="loadPrompt('{{ prompt.agent_id }}')">
+                    <div class="d-flex w-100 justify-content-between">
+                        <h6 class="mb-1">{{ prompt.agent_id }}</h6>
+                        <small>{{ prompt.content|length }} chars</small>
+                    </div>
+                    <p class="mb-1 text-muted small">{{ prompt.preview }}</p>
+                </button>
+                {% endfor %}
+            </div>
+        </div>
+
+        <div class="col-md-8">
+            <div id="editor-section" style="display: none;">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h3 id="current-agent">No agent selected</h3>
+                    <div>
+                        <button class="btn btn-success" onclick="savePrompt()" id="save-btn">
+                            Save Changes
+                        </button>
+                        <button class="btn btn-secondary" onclick="reloadPrompt()" id="reload-btn">
+                            Reload
+                        </button>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="prompt-editor">System Prompt:</label>
+                    <textarea class="form-control"
+                              id="prompt-editor"
+                              rows="25"
+                              style="font-family: monospace; font-size: 14px;"
+                              placeholder="Select an agent to edit its prompt..."></textarea>
+                </div>
+
+                <div class="row mt-3">
+                    <div class="col-md-6">
+                        <small class="text-muted">
+                            Characters: <span id="char-count">0</span>
+                        </small>
+                    </div>
+                    <div class="col-md-6">
+                        <small class="text-muted">
+                            Lines: <span id="line-count">0</span>
+                        </small>
+                    </div>
+                </div>
+            </div>
+
+            <div id="no-selection" class="text-center text-muted">
+                <h4>Select an agent from the list to edit its prompt</h4>
+                <p>You can modify the system prompts that define how each agent behaves and responds.</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+let currentAgentId = null;
+let originalContent = '';
+
+function loadPrompt(agentId) {
+    fetch(`/api/prompts/${agentId}`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.error) {
+                alert('Error loading prompt: ' + data.error);
+                return;
+            }
+
+            currentAgentId = agentId;
+            originalContent = data.content;
+
+            document.getElementById('current-agent').textContent = `Agent: ${agentId}`;
+            document.getElementById('prompt-editor').value = data.content;
+            document.getElementById('editor-section').style.display = 'block';
+            document.getElementById('no-selection').style.display = 'none';
+
+            updateStats();
+
+            // Update active item in list
+            document.querySelectorAll('.prompt-item').forEach(item => {
+                item.classList.remove('active');
+            });
+            document.querySelector(`[data-agent-id="${agentId}"]`).classList.add('active');
+        })
+        .catch(error => {
+            alert('Error loading prompt: ' + error);
+        });
+}
+
+function savePrompt() {
+    if (!currentAgentId) {
+        alert('No agent selected');
+        return;
+    }
+
+    const content = document.getElementById('prompt-editor').value;
+
+    fetch(`/api/prompts/${currentAgentId}`, {
+        method: 'PUT',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+            content: content
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.error) {
+            alert('Error saving prompt: ' + data.error);
+            return;
+        }
+
+        originalContent = content;
+        alert('Prompt saved successfully!');
+
+        // Refresh the page to show updated preview
+        location.reload();
+    })
+    .catch(error => {
+        alert('Error saving prompt: ' + error);
+    });
+}
+
+function reloadPrompt() {
+    if (!currentAgentId) {
+        return;
+    }
+
+    if (document.getElementById('prompt-editor').value !== originalContent) {
+        if (!confirm('You have unsaved changes. Are you sure you want to reload?')) {
+            return;
+        }
+    }
+
+    loadPrompt(currentAgentId);
+}
+
+function updateStats() {
+    const content = document.getElementById('prompt-editor').value;
+    document.getElementById('char-count').textContent = content.length;
+    document.getElementById('line-count').textContent = content.split('\n').length;
+}
+
+// Update stats on text change
+document.getElementById('prompt-editor').addEventListener('input', updateStats);
+
+// Warn about unsaved changes
+window.addEventListener('beforeunload', function(e) {
+    if (currentAgentId && document.getElementById('prompt-editor').value !== originalContent) {
+        e.preventDefault();
+        e.returnValue = '';
+    }
+});
+</script>
+{% endblock %}

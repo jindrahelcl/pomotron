@@ -5,6 +5,7 @@ import jsonlines
 from datetime import datetime
 from dotenv import load_dotenv
 from agents import DefaultAgent, NegativeAgent, StartAgent, DryGumAgent, JoystickAgent, ShotOutEyeAgent, AidaAgent, WasherWomanAgent, TradicniAgent, ConfessorAgent
+from agents.prompt_loader import load_prompt, save_prompt, list_available_prompts
 from story import Story
 
 # Load environment variables from .env file
@@ -111,6 +112,27 @@ def web_agents():
 @app.route('/web/history')
 def web_history():
     return render_template('history.html')
+
+@app.route('/web/prompts')
+def web_prompts():
+    available_prompts = list_available_prompts()
+    prompts_data = []
+    for agent_id in available_prompts:
+        try:
+            content = load_prompt(agent_id)
+            prompts_data.append({
+                'agent_id': agent_id,
+                'content': content,
+                'preview': content[:200] + '...' if len(content) > 200 else content
+            })
+        except Exception as e:
+            prompts_data.append({
+                'agent_id': agent_id,
+                'content': f"Error loading prompt: {str(e)}",
+                'preview': f"Error: {str(e)}"
+            })
+
+    return render_template('prompts.html', prompts=prompts_data)
 
 @app.route('/switch-agent', methods=['POST'])
 def web_switch_agent():
@@ -313,6 +335,67 @@ def get_agent_history_count(agent_id):
         'history_count': agent_history_count,
         'total_history_count': len(current_history)
     })
+
+@app.route('/api/prompts', methods=['GET'])
+def list_prompts():
+    """List all available prompts."""
+    available_prompts = list_available_prompts()
+    prompts_data = []
+
+    for agent_id in available_prompts:
+        try:
+            content = load_prompt(agent_id)
+            prompts_data.append({
+                'agent_id': agent_id,
+                'content': content,
+                'preview': content[:200] + '...' if len(content) > 200 else content,
+                'length': len(content)
+            })
+        except Exception as e:
+            prompts_data.append({
+                'agent_id': agent_id,
+                'error': str(e),
+                'preview': f"Error: {str(e)}"
+            })
+
+    return jsonify({
+        'prompts': prompts_data,
+        'count': len(prompts_data)
+    })
+
+@app.route('/api/prompts/<agent_id>', methods=['GET'])
+def get_prompt(agent_id):
+    """Get prompt content for a specific agent."""
+    try:
+        content = load_prompt(agent_id)
+        return jsonify({
+            'agent_id': agent_id,
+            'content': content,
+            'length': len(content)
+        })
+    except Exception as e:
+        return jsonify({'error': str(e)}), 404
+
+@app.route('/api/prompts/<agent_id>', methods=['PUT'])
+def update_prompt(agent_id):
+    """Update prompt content for a specific agent."""
+    data = request.get_json()
+
+    if not data or 'content' not in data:
+        return jsonify({'error': 'Content is required'}), 400
+
+    content = data['content']
+
+    try:
+        save_prompt(agent_id, content)
+        return jsonify({
+            'message': f'Prompt updated for agent {agent_id}',
+            'agent_id': agent_id,
+            'content': content,
+            'length': len(content)
+        })
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
 
 @app.errorhandler(404)
 def not_found(error):
