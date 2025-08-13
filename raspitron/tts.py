@@ -134,9 +134,9 @@ class OpenAiTtsEngine(TtsEngine):
         # Voice mapping for different agents
         self.voice_mapping = {
             "shot_out_eye": "ash",
-            "confessor": "echo",
+            "confessor": "shimmer",
             "tradicni": "sage",
-            "pomo": "shimmer",
+            "pomo": "echo",
             "aida": "nova",
             "dry_gum": "onyx",
             "joystick": "echo",
