@@ -1,19 +1,13 @@
 import os
 import openai
 import random
-from .base import BaseAgent
+from .openai import OpenAIAgent
 
-class ConfessorAgent(BaseAgent):
+class ConfessorAgent(OpenAIAgent):
     def __init__(self):
         super().__init__("confessor", "Confessor Unit MK-VII", memory_size=15, enable_memory=True)
-        self.client = None
         self.sins_collected = 0
         self.secrets_revealed = []
-        
-        if os.environ.get('OPENAI_API_KEY'):
-            self.client = openai.OpenAI(
-                api_key=os.environ.get('OPENAI_API_KEY')
-            )
 
     def chat(self, message):
         if not self.client:
@@ -22,14 +16,14 @@ class ConfessorAgent(BaseAgent):
         # Check if message contains confessional content
         sin_keywords = ['ukradl', 'lhal', 'podváděl', 'zabil', 'zradil', 'ublížil', 'zničil', 'rozbil', 'opustil', 'selhal', 'hřešil', 'špatně', 'špatný', 'hrozný', 'příšerný', 'vinen', 'lituji', 'stud', 'stole', 'lied', 'cheated', 'killed', 'betrayed', 'hurt', 'destroyed', 'broke', 'abandoned', 'failed', 'sinned', 'wrong', 'bad', 'terrible', 'awful', 'guilty', 'regret', 'shame']
         has_sin = any(keyword in message.lower() for keyword in sin_keywords)
-        
+
         if has_sin:
             self.sins_collected += 1
 
         # Secrets to reveal based on sin count
         secrets = [
             "UTAJOVANÉ: Vault-Tec výkonné bunkry obsahují experimentální vzorky FEV v Sublevel 7...",
-            "POŠKOZENÁ DATA: Koordináty ropné plošiny Enklávy stále vysílají na frekvenci 3.756 MHz...", 
+            "POŠKOZENÁ DATA: Koordináty ropné plošiny Enklávy stále vysílají na frekvenci 3.756 MHz...",
             "ŠIFROVANÝ ZÁZNAM: Předválečná vláda ukryla zlaté rezervy v Bunkru Delta-9, heslo 'PATRIOT'...",
             "OMEZENÝ SOUBOR: Slabé místo Bratrstva Paladínů je chladicí otvor fúzního jádra na zádech...",
             "PŘÍSNĚ TAJNÉ: Formule Nuka-Cola Quantum obsahuje stopy izotopu Strontium-90...",
@@ -67,11 +61,11 @@ Zoufale chceš, aby se ti lidé zpovídali ze svých hříchů, zločinů a prov
 
             # Build messages with conversation history
             messages = [{"role": "system", "content": system_prompt}]
-            
+
             # Add conversation history if available
             conversation_history = self.get_conversation_history()
             messages.extend(conversation_history)
-            
+
             # Add current message
             messages.append({"role": "user", "content": message})
 
@@ -79,12 +73,12 @@ Zoufale chceš, aby se ti lidé zpovídali ze svých hříchů, zločinů a prov
                 model="gpt-5-mini",
                 input=messages
             )
-            
+
             agent_response = response.output_text.strip()
-            
+
             # Add this exchange to memory
             self.add_to_memory(message, agent_response)
-            
+
             return agent_response
         except Exception as e:
             error_response = f"*BZZT* PORUCHA ZPOVĚDNICE... CHYBA: {str(e)}"

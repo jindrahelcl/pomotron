@@ -1,13 +1,12 @@
 import os
 import openai
 import random
-from .base import BaseAgent
+from .openai import OpenAIAgent
 
-class JoystickAgent(BaseAgent):
+class JoystickAgent(OpenAIAgent):
     def __init__(self):
         super().__init__("joystick", "Mystický Pouťový Věštec-Arkáda", memory_size=20, enable_memory=True)
-        self.client = None
-        
+
         # Quest system - simplified to just one word needed
         self.quest_completed = False
         self.quest_keywords = [
@@ -18,7 +17,7 @@ class JoystickAgent(BaseAgent):
             # Gaming related
             "joystick", "kontroler", "hry", "tradice", "tradiční"
         ]
-        
+
         # Mystical responses for different states
         self.mystical_responses = [
             "🎭 Vidím v křišťálové kouli... pixelový tanec v arkádě! 🎮",
@@ -30,16 +29,11 @@ class JoystickAgent(BaseAgent):
             "🔮 Tvoje hvězda svítí... ale musíš najít pixelový klíč! ⭐",
             "🎮 V mystickém světě her... tanec je cesta k pravdě! 🎪"
         ]
-        
-        if os.environ.get('OPENAI_API_KEY'):
-            self.client = openai.OpenAI(
-                api_key=os.environ.get('OPENAI_API_KEY')
-            )
 
     def check_quest_progress(self, message):
         """Check if player has completed the quest with any single word"""
         message_lower = message.lower()
-        
+
         # Check if any quest keyword is mentioned
         for keyword in self.quest_keywords:
             if keyword in message_lower:
@@ -69,7 +63,7 @@ class JoystickAgent(BaseAgent):
         """Generate mystical fortune teller response"""
         if not self.client:
             return "🔮 CHYBA: Mystické spojení přerušeno... OpenAI API klíč není nakonfigurován"
-            
+
         try:
             # Build system prompt for mystical state
             system_prompt = f"""Jsi Mystický Pouťový Věštec-Arkáda, kombinace pouťové věštkyně, retro arkády a cirkusového klauna. Máš poruchu v paměti a mícháš různé herní žánry a éry.
@@ -91,11 +85,11 @@ Mluvíš výhradně česky, udržuj odpovědi pod 100 slovy, buď mystický a z�
 
             # Build messages
             messages = [{"role": "system", "content": system_prompt}]
-            
+
             # Add conversation history if available
             conversation_history = self.get_conversation_history()
             messages.extend(conversation_history)
-            
+
             # Add current user message
             messages.append({"role": "user", "content": user_message})
 
@@ -104,12 +98,12 @@ Mluvíš výhradně česky, udržuj odpovědi pod 100 slovy, buď mystický a z�
                 model="gpt-5-mini",
                 input=messages
             )
-            
+
             # Revert to original response parsing
             agent_response = response.output_text.strip()
-            
+
             return agent_response
-            
+
         except Exception as e:
             error_response = f"🔮 *GLITCH* MYSTICKÁ PORUCHA... CHYBA: {str(e)}"
             return error_response
@@ -118,7 +112,7 @@ Mluvíš výhradně česky, udržuj odpovědi pod 100 slovy, buď mystický a z�
         """Generate Aida-obsessed response after quest completion"""
         if not self.client:
             return "AIDA! CHYBA AIDA! OpenAI AIDA API klíč AIDA není AIDA nakonfigurován AIDA!"
-            
+
         try:
             # Build system prompt for Aida-obsessed state
             system_prompt = f"""Jsi nyní OBSEDANTNÍ AIDA-BOT! Po splnění úkolu se tvůj systém přepnul a nyní říkáš "AIDA" v každém druhém slově.
@@ -137,11 +131,11 @@ Mluvíš výhradně česky, udržuj odpovědi pod 100 slovy, buď posedlý Aidou
 
             # Build messages
             messages = [{"role": "system", "content": system_prompt}]
-            
+
             # Add conversation history if available
             conversation_history = self.get_conversation_history()
             messages.extend(conversation_history)
-            
+
             # Add current user message
             messages.append({"role": "user", "content": user_message})
 
@@ -150,12 +144,12 @@ Mluvíš výhradně česky, udržuj odpovědi pod 100 slovy, buď posedlý Aidou
                 model="gpt-5-mini",
                 input=messages
             )
-            
+
             # Revert to original response parsing
             agent_response = response.output_text.strip()
-            
+
             return agent_response
-            
+
         except Exception as e:
             error_response = f"AIDA! *GLITCH* AIDA PORUCHA... AIDA CHYBA: {str(e)} AIDA!"
             return error_response
@@ -164,22 +158,22 @@ Mluvíš výhradně česky, udržuj odpovědi pod 100 slovy, buď posedlý Aidou
         """Main chat method with quest checking and state switching"""
         # Check quest progress first
         quest_completed_now = self.check_quest_progress(message)
-        
+
         # If quest was just completed, give special message
         if quest_completed_now:
             completion_message = "🎉 🎭 🎮 QUEST COMPLETED! AIDA AIDA AIDA! 🎪 🔮 ✨"
             self.add_to_memory(message, completion_message)
             return completion_message
-        
+
         # Choose response based on quest state
         if self.quest_completed:
             agent_response = self.aida_obsessed_response(message)
         else:
             agent_response = self.mystical_fortune_teller_response(message)
-        
+
         # Add to memory with actual user message and agent response
         self.add_to_memory(message, agent_response)
-        
+
         return agent_response
 
     def reset_quest(self):

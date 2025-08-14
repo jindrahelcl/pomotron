@@ -1,22 +1,15 @@
-import os
-import openai
-from .base import BaseAgent
 from .prompt_loader import load_prompt
+from .openai import OpenAIAgent
 
-class WasherWomanAgent(BaseAgent):
+class WasherWomanAgent(OpenAIAgent):
     def __init__(self):
         super().__init__("washer_woman", "WasherWoman Agent")
-        self.client = None
         # Initialize conversation history with the system message from file
         system_prompt = load_prompt("washer_woman")
+        # Initialize conversation history with the system message
         self.conversation_history = [
             {"role": "system", "content": system_prompt}
         ]
-
-        if os.environ.get('OPENAI_API_KEY'):
-            self.client = openai.OpenAI(
-                api_key=os.environ.get('OPENAI_API_KEY')
-            )
 
     def chat(self, message):
         if not self.client:
