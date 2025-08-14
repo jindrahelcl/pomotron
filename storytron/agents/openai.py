@@ -8,9 +8,10 @@ class OpenAIAgent(BaseAgent):
     def __init__(self, agent_id, name, memory_size=50, enable_memory=True, load_system_prompt=True, tts_engine='gtts', tts_voice=None):
         super().__init__(agent_id, name, memory_size, enable_memory, tts_engine, tts_voice)
         self._client = None
+        self.load_system_prompt = load_system_prompt
 
         if load_system_prompt:
-            system_prompt = load_prompt(agent_id)
+            system_prompt = load_prompt(agent_id, self.satisfied)
             self.conversation_history = [{"role": "system", "content": system_prompt}]
         else:
             self.conversation_history = []

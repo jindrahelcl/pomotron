@@ -1,4 +1,5 @@
 import json, os
+from agents.prompt_loader import load_prompt
 
 STATE_FILE = os.environ.get('STORY_STATE_FILE', 'story_state.json')
 DEFAULT_STATE_FILE = os.environ.get('DEFAULT_STORY_STATE_FILE', 'default_story_state.json')
@@ -96,6 +97,14 @@ class Story:
                 # Restore memory state
                 if 'memory' in st:
                     self._agents[aid].set_memory_state(st['memory'])
+
+                # Update system prompt for OpenAI agents after satisfaction state is restored
+                agent = self._agents[aid]
+                if (hasattr(agent, 'load_system_prompt') and agent.load_system_prompt and
+                    hasattr(agent, 'conversation_history') and agent.conversation_history and
+                    agent.conversation_history[0]['role'] == 'system'):
+                    system_prompt = load_prompt(agent.agent_id, agent.satisfied)
+                    agent.conversation_history[0]['content'] = system_prompt
 
     def _save_state(self):
         with open(STATE_FILE, 'w') as f:
