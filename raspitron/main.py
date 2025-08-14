@@ -10,6 +10,7 @@ try:
     from player import BeePlayer
 except ModuleNotFoundError:
     BeePlayer = None
+import pygame
 from math import pi
 import threading
 if os.environ.get('DISABLE_GEIGER', '0') != "1":
@@ -67,6 +68,7 @@ class RaspiTRON:
             tts_engine = data.get('tts_engine', 'gtts')
             tts_voice = data.get('tts_voice', None)
             print(f"{agent}: {bot_response}", end="\r\n")
+            self.play_boop()
             self.tts.say(bot_response, agent=agent, cb=stop_geiger, engine_type=tts_engine, voice=tts_voice)
         else:
             stop_geiger(beep=False)
@@ -81,6 +83,15 @@ class RaspiTRON:
         player.open()
         player.play(-0.02, 0.02)
         player.close()
+
+    def play_boop(self):
+        try:
+            if not pygame.mixer.get_init():
+                pygame.mixer.init()
+            sound = pygame.mixer.Sound('boop.wav')
+            sound.play()
+        except (pygame.error, FileNotFoundError) as e:
+            print(f"Error playing boop: {e}", file=sys.stderr)
 
     def sentence_cb(self, sentence):
         sentence = sentence.strip()
