@@ -37,7 +37,6 @@ class RaspiTRON:
     def send_message(self, message: str):
         print("\r")
         print(f"[Sending: {message}]", file=sys.stderr, end="\r\n")
-        self.play_on_enter()
         stop_event = threading.Event()
         geiger_thread = threading.Thread(target=geiger.run, args=(stop_event,))
         geiger_thread.start()
@@ -119,6 +118,7 @@ class RaspiTRON:
                     continue
                 if line != self.last_read:
                     self.tts.say(line, agent="pomo")
+                self.play_on_enter()
                 self.tts.join()
                 self.send_message(line)
         except EOFError:
