@@ -9,6 +9,8 @@ from agents.confessor import ConfessorAgent
 from agents.openai import OpenAIAgent
 from agents.prompt_loader import load_prompt, save_prompt, list_available_prompts
 from story import Story
+import json
+
 
 # Load environment variables from .env file
 load_dotenv()
@@ -26,6 +28,30 @@ app.config['PORT'] = int(os.environ.get('PORT', 5000))
 app.config['OPENAI_API_KEY'] = os.environ.get('OPENAI_API_KEY')
 
 HISTORY_FILE = os.environ.get('HISTORY_FILE', 'message_history.jsonl')
+
+@app.before_request
+def log_request():
+    if request.path.startswith('/api/chat'):
+        message = ""
+        if request.is_json:
+            try:
+                data = request.get_json()
+                message = data.get('message', '').replace('\n', ' ')[:100]
+            except:
+                message = "[JSON parse error]"
+        print(f"{datetime.now()} - {request.method} {request.path} - message: {message}")
+
+@app.after_request
+def log_response(response):
+    if request.path.startswith('/api/chat'):
+        agent_response = ""
+        try:
+            response_data = json.loads(response.get_data(as_text=True))
+            agent_response = response_data.get('agent_response', '').replace('\n', ' ')[:100]
+        except:
+            agent_response = "[Response parse error]"
+        print(f"{datetime.now()} - {response.status_code} {request.path} - agent_response: {agent_response}")
+    return response
 
 def load_history():
     history = []
