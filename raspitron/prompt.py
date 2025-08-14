@@ -23,15 +23,47 @@ class Session:
         self.sentence_cb = sentence_cb
         kb = KeyBindings()
 
-        # Add general key handler for keypress sound
+        # Override default key bindings to add sound
         @kb.add('<any>')
-        def _(event):
-            self.play_keypress()
-            # Let the default handler process the key
+        @erring_handler
+        def handle_any(event):
+            sounds.play_keypress()
+            # Insert the character manually
             event.app.current_buffer.insert_text(event.data)
+
+        @kb.add('left')
+        @erring_handler
+        def handle_left(event):
+            sounds.play_keypress()
+            event.app.current_buffer.cursor_left()
+
+        @kb.add('right')
+        @erring_handler
+        def handle_right(event):
+            sounds.play_keypress()
+            event.app.current_buffer.cursor_right()
+
+        @kb.add('up')
+        @erring_handler
+        def handle_up(event):
+            sounds.play_keypress()
+            event.app.current_buffer.history_backward()
+
+        @kb.add('down')
+        @erring_handler
+        def handle_down(event):
+            sounds.play_keypress()
+            event.app.current_buffer.history_forward()
+
+        @kb.add('backspace')
+        @erring_handler
+        def handle_backspace(event):
+            sounds.play_keypress()
+            event.app.current_buffer.delete_before_cursor()
 
         for char in PUNCT:
             kb.add(char)(self.onpunctuation)
+
         self.prompt_session = PromptSession(key_bindings=kb)
 
     def play_keypress(self):
