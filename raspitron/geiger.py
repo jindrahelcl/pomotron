@@ -7,7 +7,7 @@ import time
 from scipy.signal import butter, lfilter
 
 # ---------- Parameters ----------
-base_cps = 2.5              # average counts/sec
+base_cps = 2.0              # average counts/sec - can be modified at runtime
 variation_depth = 0.5       # +/-50% variation
 change_interval = 5.0       # seconds between new target rates
 sample_rate = 44100
@@ -27,6 +27,9 @@ class SlowRateModulator:
         self.current_mult = 1.0
         self.target_mult = 1.0
         self.time_to_next_change = 0
+
+    def set_base_cps(self, new_base_cps):
+        self.base_cps = new_base_cps
 
     def sample_rate_multiplier_log_cauchy(self):
         loc = 0.0  # median on log scale corresponds to multiplier=1
@@ -91,8 +94,9 @@ def run(stop_event):
     deadtime_s = deadtime_ms / 1000.0
     click_template = make_click(click_len_samples, sample_rate)
 
-    modulator = SlowRateModulator(base_cps, variation_depth, change_interval)
-    event_gen = generate_poisson_event_times(modulator, deadtime_s)
+    global modulator_instance
+    modulator_instance = SlowRateModulator(base_cps, variation_depth, change_interval)
+    event_gen = generate_poisson_event_times(modulator_instance, deadtime_s)
 
     current_time = 0.0
     pending_clicks = []
@@ -135,4 +139,12 @@ def run(stop_event):
         pcm.write((buf * 32767).astype(np.int16).tobytes())
 
         current_time += buffer_size / sample_rate
+
+
+modulator_instance = None
+
+def set_base_cps(new_cps):
+    global modulator_instance
+    if modulator_instance:
+        modulator_instance.set_base_cps(new_cps)
 
