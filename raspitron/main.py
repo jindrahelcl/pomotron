@@ -37,7 +37,7 @@ class RaspiTRON:
 
         # Pomo agent TTS configuration
         self.pomo_tts_engine = os.environ.get('POMO_TTS_ENGINE', 'festival')
-        self.pomo_tts_voice = os.environ.get('POMO_TTS_VOICE', "ph")
+        self.pomo_tts_voice = os.environ.get('POMO_TTS_VOICE', "dita")
         self.disable_sentence_echo = (os.environ.get("DISABLE_SENTENCE_ECHO", "1") == "1")
 
     def send_message(self, message: str):
