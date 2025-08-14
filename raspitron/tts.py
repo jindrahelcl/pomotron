@@ -21,12 +21,13 @@ class TtsEngine:
     def __init__(self, lang: str = 'en'):
         self.lang = lang
 
-    def synthesize(self, text: str, filename: str, agent: str):
+    def synthesize(self, text: str, filename: str, agent: str, voice: str = None):
         """Synthesize text to audio file"""
         raise NotImplementedError
 
 class GttsEngine(TtsEngine):
-    def synthesize(self, text: str, filename: str, agent: str):
+    def synthesize(self, text: str, filename: str, agent: str, voice: str = None):
+        # gTTS doesn't support custom voices, ignore voice parameter
         tts = gTTS(text=text, lang=self.lang)
         tts.save(filename)
 
@@ -39,20 +40,10 @@ class GeminiTtsEngine(TtsEngine):
 
         self.client = genai.Client(api_key=api_key)
 
-        self.voice_mapping = {
-            "dry_gum": "Algieba",
-            "shot_out_eye": "Fenrir",
-            "confessor": "Charon",
-            "tradicni": "Orus",
-            "pomo": "Puck",
-        }
-
-    def get_voice_for_agent(self, agent: str) -> str:
-        return self.voice_mapping.get(agent, "Kore")
-
-    def synthesize(self, text: str, filename: str, agent: str):
+    def synthesize(self, text: str, filename: str, agent: str, voice: str = None):
         try:
-            voice_name = self.get_voice_for_agent(agent)
+            # Use provided voice or default to "Kore"
+            voice_name = voice if voice else "Kore"
 
             response = self.client.models.generate_content(
                 model="gemini-2.5-flash-preview-tts",
@@ -99,19 +90,12 @@ class FestivalEngine(TtsEngine):
             "mbrola": '(progn (set! mbrola_progname "/usr/bin/mbrola")(set! czech-mbrola_database "/usr/share/mbrola/cz2/cz2")(require \'czech-mbrola)(voice_czech_mbrola_cz2))',
         }.get(voice, "(voice_czech_krb)")
 
-    def agent_to_voice(self, agent: str):
-        return {
-            "shot_out_eye": "mbrola",
-            "confessor": "krb",
-            "tradicni": "ph",
-            "pomo": "dita",
-        }.get(agent, "machac")
-
-    def synthesize(self, text: str, filename: str, agent: str):
+    def synthesize(self, text: str, filename: str, agent: str, voice: str = None):
         encoded_text = text.encode('iso8859-2', errors='ignore')
         with open(filename, 'wb') as outfile:
-            voice = self.agent_to_voice(agent)
-            voice_cmd = self.get_voice_cmd(voice)
+            # Use provided voice or default to "machac"
+            voice_name = voice if voice else "machac"
+            voice_cmd = self.get_voice_cmd(voice_name)
             text2wave_proc = subprocess.Popen(
                 ['text2wave', '-eval', voice_cmd],
                 stdin=subprocess.PIPE,
@@ -132,32 +116,15 @@ class OpenAiTtsEngine(TtsEngine):
 
         self.client = AsyncOpenAI(api_key=api_key)
 
-        # Voice mapping for different agents
-        self.voice_mapping = {
-            "shot_out_eye": "ash",
-            "confessor": "coral",
-            "tradicni": "sage",
-            "pomo": "onyx",
-            "aida": "nova",
-            "dry_gum": "echo",
-            "joystick": "echo",
-            "negative": "fable",
-            "start": "shimmer",
-            "washer_woman": "coral",
-            "default": "alloy",
-        }
-
-    def get_voice_for_agent(self, agent: str) -> str:
-        return self.voice_mapping.get(agent, "alloy")
-
-    def synthesize(self, text: str, filename: str, agent: str):
+    def synthesize(self, text: str, filename: str, agent: str, voice: str = None):
         """Synthesize text to audio file using OpenAI TTS"""
         # Run async synthesis in sync context
-        asyncio.run(self._async_synthesize(text, filename, agent))
+        asyncio.run(self._async_synthesize(text, filename, agent, voice))
 
-    async def _async_synthesize(self, text: str, filename: str, agent: str):
+    async def _async_synthesize(self, text: str, filename: str, agent: str, voice: str = None):
         """Async synthesis method"""
-        voice_name = self.get_voice_for_agent(agent)
+        # Use provided voice or default to "alloy"
+        voice_name = voice if voice else "alloy"
 
         response = await self.client.audio.speech.create(
             model="tts-1",
@@ -170,9 +137,10 @@ class OpenAiTtsEngine(TtsEngine):
         with open(filename, 'wb') as f:
             f.write(response.content)
 
-    async def synthesize_and_play_streaming(self, text: str, agent: str):
+    async def synthesize_and_play_streaming(self, text: str, agent: str, voice: str = None):
         """Synthesize and play audio in real-time streaming mode"""
-        voice_name = self.get_voice_for_agent(agent)
+        # Use provided voice or default to "alloy"
+        voice_name = voice if voice else "alloy"
 
         async with self.client.audio.speech.with_streaming_response.create(
             model="tts-1",
@@ -185,23 +153,47 @@ class OpenAiTtsEngine(TtsEngine):
             await player.play(response)
 
 class TtsManager:
-    def __init__(self, lang: str = 'cs', engine_type: str = 'gtts'):
+    def __init__(self, lang: str = 'cs'):
         self.running = True
-        self.enabled = os.environ.get('RASPITRON_TTS', '1') != '0' and engine_type != 'none'
+        self.enabled = os.environ.get('RASPITRON_TTS', '1') != '0'
         self.lang = lang
-        self.engine = None
+        self.engines = {}
 
+        # Pre-initialize all possible engines if TTS is enabled
         if self.enabled:
-            if engine_type == 'festival':
-                self.engine = FestivalEngine()
-            elif engine_type == 'gemini':
-                self.engine = GeminiTtsEngine(lang)
-            elif engine_type == 'openai':
-                self.engine = OpenAiTtsEngine(lang)
-            else:
-                self.engine = GttsEngine(lang)
+            self._initialize_engines()
         else:
             print("TTS Engine disabled", file=sys.stderr)
+
+        #self._audio_player_cmd = [r"c:\\Program Files\\VideoLAN\\VLC\\vlc.exe", "--play-and-exit", "--intf", "dummy"]
+        self._audio_player_cmd = ['ffplay', '-nodisp', '-autoexit', '-loglevel', 'quiet']
+        self._tts_queue = queue.Queue()
+        self._tts_thread = None
+
+        if self.enabled:
+            self._start_worker_thread()
+
+    def _initialize_engines(self):
+        """Initialize all possible TTS engines"""
+        try:
+            self.engines['gtts'] = GttsEngine(self.lang)
+        except Exception as e:
+            print(f"Failed to initialize gTTS engine: {e}", file=sys.stderr)
+
+        try:
+            self.engines['festival'] = FestivalEngine()
+        except Exception as e:
+            print(f"Failed to initialize Festival engine: {e}", file=sys.stderr)
+
+        try:
+            self.engines['gemini'] = GeminiTtsEngine(self.lang)
+        except Exception as e:
+            print(f"Failed to initialize Gemini engine: {e}", file=sys.stderr)
+
+        try:
+            self.engines['openai'] = OpenAiTtsEngine(self.lang)
+        except Exception as e:
+            print(f"Failed to initialize OpenAI engine: {e}", file=sys.stderr)
 
         #self._audio_player_cmd = [r"c:\\Program Files\\VideoLAN\\VLC\\vlc.exe", "--play-and-exit", "--intf", "dummy"]
         self._audio_player_cmd = ['ffplay', '-nodisp', '-autoexit', '-loglevel', 'quiet']
@@ -224,28 +216,41 @@ class TtsManager:
             try:
                 queue_item = self._tts_queue.get(timeout=0.1)
 
-                # Handle both old format (text, agent, cb) and new format (text, agent, cb, streaming)
-                if len(queue_item) == 4:
-                    text, agent, cb, use_streaming = queue_item
+                # Handle format: (text, agent, cb, use_streaming, engine_type, voice)
+                if len(queue_item) == 6:
+                    text, agent, cb, use_streaming, engine_type, voice = queue_item
+                elif len(queue_item) == 5:
+                    # Backward compatibility
+                    text, agent, cb, use_streaming, engine_type = queue_item
+                    voice = None
                 else:
-                    text, agent, cb = queue_item
+                    # Fallback for old format
+                    text, agent, cb = queue_item[:3]
                     use_streaming = False
+                    engine_type = 'gtts'
+                    voice = None
 
                 if text is None:
                     break
                 if not text.strip():
                     continue
 
+                # Get the specified engine
+                engine = self.engines.get(engine_type)
+                if not engine:
+                    print(f"Unknown TTS engine: {engine_type}, using gtts", file=sys.stderr)
+                    engine = self.engines.get('gtts')
+
                 # Use streaming mode for OpenAI if requested
-                if use_streaming and isinstance(self.engine, OpenAiTtsEngine):
+                if use_streaming and isinstance(engine, OpenAiTtsEngine):
                     # Run streaming synthesis
-                    asyncio.run(self.engine.synthesize_and_play_streaming(text, agent))
+                    asyncio.run(engine.synthesize_and_play_streaming(text, agent, voice))
 
                     if cb:
                         cb()
                 else:
                     # Regular synthesis for all other cases
-                    self._regular_synthesis(text, agent, cb)
+                    self._regular_synthesis(text, agent, cb, engine, voice)
 
                 self._tts_queue.task_done()
 
@@ -254,16 +259,16 @@ class TtsManager:
             except Exception as e:
                 print(f"[TTS error: {e}]", file=sys.stderr)
 
-    def _regular_synthesis(self, text: str, agent: str, cb):
+    def _regular_synthesis(self, text: str, agent: str, cb, engine, voice=None):
         """Regular file-based synthesis and playback"""
-        if isinstance(self.engine, GeminiTtsEngine):
+        if isinstance(engine, GeminiTtsEngine):
             with tempfile.NamedTemporaryFile(suffix='.wav', delete=False) as tmp_file:
                 tmp_path = tmp_file.name
         else:
             with tempfile.NamedTemporaryFile(suffix='.wav', delete=False) as tmp_file:
                 tmp_path = tmp_file.name
 
-        self.engine.synthesize(text, tmp_path, agent)
+        engine.synthesize(text, tmp_path, agent, voice)
 
         if cb:
             cb()
@@ -281,7 +286,7 @@ class TtsManager:
         processed_text = processed_text.replace('*', '')
         return processed_text
 
-    def say(self, text: str, agent: str, cb=None, use_streaming=False):
+    def say(self, text: str, agent: str, cb=None, use_streaming=False, engine_type='gtts', voice=None):
         if not self.enabled:
             # If TTS is disabled, just call the callback immediately
             if cb:
@@ -294,11 +299,8 @@ class TtsManager:
             if not any(char in string.ascii_letters+string.digits for char in processed_text):
                 return
 
-            # Use streaming mode for OpenAI if requested and available
-            if use_streaming and isinstance(self.engine, OpenAiTtsEngine):
-                self._tts_queue.put_nowait((processed_text, agent, cb, True))
-            else:
-                self._tts_queue.put_nowait((processed_text, agent, cb, False))
+            # Put request in queue with engine type and voice
+            self._tts_queue.put_nowait((processed_text, agent, cb, use_streaming, engine_type, voice))
         except queue.Full:
             pass
 
@@ -306,12 +308,11 @@ class TtsManager:
         self.running = False
         if self._tts_thread and self._tts_thread.is_alive():
             try:
-                self._tts_queue.put_nowait((None, None, None, False))
+                self._tts_queue.put_nowait((None, None, None, False, None, None))
                 self._tts_thread.join(timeout=1.0)
             except:
                 pass
 
 def create_tts_manager() -> TtsManager:
     lang = os.environ.get('RASPITRON_TTS_LANG', 'cs')
-    engine = os.environ.get('RASPITRON_TTS_ENGINE', 'gtts')
-    return TtsManager(lang=lang, engine_type=engine)
+    return TtsManager(lang=lang)

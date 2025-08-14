@@ -8,7 +8,8 @@ Konzolové rozhraní pro PomoTRON - Minimalistická aplikace pro nevidomé pro i
 - Konfigurovatelné připojení ke StoryTRON serveru
 - Minimalistické konzolové rozhraní
 - Testování připojení a hlášení stavu
-- Volitelné čtení odpovědí nahlas pomocí gTTS
+- Dynamické TTS založené na odpovědi StoryTRON serveru pro každý jednotlivý požadavek
+- Podpora všech TTS engines: gTTS, Festival, Gemini, OpenAI
 
 ## Instalace
 
@@ -47,7 +48,17 @@ Aplikace čte následující proměnné prostředí:
 - `STORYTRON_URL`: URL StoryTRON serveru (výchozí: `http://localhost:5000`)
 - `RASPITRON_TTS`: Povolit TTS ("1"/"0", výchozí: povoleno)
 - `RASPITRON_TTS_LANG`: Jazyk pro TTS (např. `en`, `cs`; výchozí: `cs`)
-- `RASPITRON_TTS_ENGINE`: TTS engine ("gtts", "festival", "gemini"; výchozí: "gtts")
+
+TTS engine je automaticky vybírán pro každý jednotlivý požadavek na základě odpovědi ze StoryTRON serveru.
+Podporované engines: `gtts`, `festival`, `gemini`, `openai`.
+
+### API klíče
+
+Pro použití všech TTS engines je třeba nastavit tyto proměnné prostředí:
+- `GOOGLE_API_KEY`: Pro Gemini TTS
+- `OPENAI_API_KEY`: Pro OpenAI TTS
+
+Festival a gTTS nevyžadují API klíče.
 - `GOOGLE_API_KEY`: API klíč pro Google AI Studio (nutný pro gemini engine)
 
 ## Architektura
