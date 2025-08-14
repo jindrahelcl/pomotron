@@ -38,21 +38,9 @@ fi
 PY="$VENV_DIR/bin/python"
 PIP="$VENV_DIR/bin/pip"
 
-echo "Installing Python dependencies..."
-"$PIP" install --quiet --upgrade pip
-"$PIP" install --quiet -r "$SCRIPT_DIR/requirements.txt"
-
-# Check for audio player (mpg123/ffplay/mpv)
-if command -v mpg123 &> /dev/null; then
-    AUDIO_PLAYER=mpg123
-elif command -v ffplay &> /dev/null; then
-    AUDIO_PLAYER=ffplay
-elif command -v mpv &> /dev/null; then
-    AUDIO_PLAYER=mpv
-else
-    echo "Warning: No audio player found (mpg123/ffplay/mpv). TTS will be disabled."
-    export RASPITRON_TTS=0
-fi
+#echo "Installing Python dependencies..."
+#"$PIP" install --quiet --upgrade pip
+#"$PIP" install --quiet -r "$SCRIPT_DIR/requirements.txt"
 
 echo "Starting RaspiTRON..."
 echo ""
