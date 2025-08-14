@@ -108,7 +108,7 @@ class Story:
 
     def _save_state(self):
         with open(STATE_FILE, 'w') as f:
-            json.dump(self._to_state(), f)
+            json.dump(self._to_state(), f, indent=2)
 
     def load_state(self):
         with open(STATE_FILE, 'r') as f:

@@ -246,12 +246,15 @@ def chat():
     agent_response = story.chat(message)
     timestamp = datetime.now().isoformat()
 
+    # Save story state after chat (important for satisfaction state changes)
+    story._save_state()
+
     entry = {
         'timestamp': timestamp,
         'sender': sender,
         'message': message,
         'response': agent_response,
-    'agent': story.current_id
+        'agent': story.current_id
     }
 
     append_to_history(entry)
