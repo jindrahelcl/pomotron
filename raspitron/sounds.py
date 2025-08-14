@@ -29,6 +29,7 @@ class Sounds:
         }
 
         self.sounds = {}
+        self._geiger_paused = False
         self._load_sounds()
 
     def _load_sounds(self):
@@ -61,18 +62,28 @@ class Sounds:
             self.channels['beep-startup'].play(sound)
 
     def start_geiger(self):
-        sound = self.sounds.get('geiger.wav')
-        if sound:
-            self.channels['geiger'].play(sound, loops=-1)  # Loop forever
+        """Start geiger counter sound (resumes if paused, starts fresh if stopped)"""
+        if self._geiger_paused:
+            # Resume from where we left off
+            self.channels['geiger'].unpause()
+            self._geiger_paused = False
+        else:
+            # Start fresh
+            sound = self.sounds.get('geiger.wav')
+            if sound:
+                self.channels['geiger'].play(sound, loops=-1)  # Loop forever
 
     def pause_geiger(self):
         self.channels['geiger'].pause()
+        self._geiger_paused = True
 
     def resume_geiger(self):
         self.channels['geiger'].unpause()
+        self._geiger_paused = False
 
     def stop_geiger(self):
-        self.channels['geiger'].stop()
+        self.channels['geiger'].pause()
+        self._geiger_paused = True
 
     def is_geiger_playing(self):
         return self.channels['geiger'].get_busy()
