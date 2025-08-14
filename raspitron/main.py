@@ -4,6 +4,7 @@ from dotenv import load_dotenv
 import os
 import sys
 import requests
+import time
 from prompt import Session
 from sounds import sounds
 from tts import create_tts_manager
@@ -105,6 +106,7 @@ class RaspiTRON:
                 self.send_message(line)
         except EOFError:
             sounds.play_reload()
+            time.sleep(0.5)
         finally:
             self.tts.shutdown()
 
