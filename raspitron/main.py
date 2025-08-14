@@ -67,7 +67,6 @@ class RaspiTRON:
             tts_engine = data.get('tts_engine', 'gtts')
             tts_voice = data.get('tts_voice', None)
             print(f"{agent}: {bot_response}", end="\r\n")
-            geiger.set_base_cps(3.0)
             self.tts.say(bot_response, agent=agent, cb=stop_geiger, engine_type=tts_engine, voice=tts_voice)
         else:
             stop_geiger(beep=False)
