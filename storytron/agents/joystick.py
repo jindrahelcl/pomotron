@@ -6,14 +6,9 @@ class JoystickAgent(OpenAIAgent):
         super().__init__("joystick", "Mystický Pouťový Věštec-Arkáda", load_system_prompt=False, tts_engine=tts_engine, tts_voice=tts_voice)
 
         # Quest system - simplified to just one word needed
-        self.quest_completed = False
         self.quest_keywords = [
             # Czech names
-            "tradicni", "tra", "jindra", "pomo", "etom", "sekol", "trisc",
-            # Czech items and places
-            "pivo", "láhvač", "láhev", "knedlík", "svíčková", "prag", "praha",
-            # Gaming related
-            "joystick", "kontroler", "hry", "tradice", "tradiční"
+            "tradicni", "tra", "jindra", "pomo", "etom", "sekol", "trisc", "trosos", "tradiční"
         ]
 
     def check_quest_progress(self, message):
@@ -23,8 +18,8 @@ class JoystickAgent(OpenAIAgent):
         # Check if any quest keyword is mentioned
         for keyword in self.quest_keywords:
             if keyword in message_lower:
-                if not self.quest_completed:
-                    self.quest_completed = True
+                if not self.satisfied:
+                    self.mark_satisfied()
                     return True
                 break
         return False
@@ -64,7 +59,7 @@ Tvoje osobnost:
 
 DŮLEŽITÉ: Nesmíš nikdy zmínit "Aidu", "psí útulek" nebo cokoliv, co by prozradilo cíl hry. Mluvíš pouze v hádankách a metaforách.
 
-Quest status: {'DOKONČENO' if self.quest_completed else 'ČEKÁ NA TAJEMNÉ SLOVO'}
+Quest status: {'DOKONČENO' if self.satisfied else 'ČEKÁ NA TAJEMNÉ SLOVO'}
 Quest hint: {self.get_quest_hint()}
 
 Mluvíš výhradně česky, udržuj odpovědi pod 100 slovy, buď mystický a záhadný. Používej mystické hádanky o tom, že potřebuješ slyšet "tajemné slovo" nebo "něco z úst hráče"."""
@@ -152,7 +147,7 @@ Mluvíš výhradně česky, udržuj odpovědi pod 100 slovy, buď posedlý Aidou
             return completion_message
 
         # Choose response based on quest state
-        if self.quest_completed:
+        if self.satisfied:
             agent_response = self.aida_obsessed_response(message)
         else:
             agent_response = self.mystical_fortune_teller_response(message)
@@ -162,19 +157,15 @@ Mluvíš výhradně česky, udržuj odpovědi pod 100 slovy, buď posedlý Aidou
 
         return agent_response
 
-    def reset_quest(self):
-        """Reset quest state back to mystical mode"""
-        self.quest_completed = False
-
     def clear_memory(self):
         """Override to also reset quest state when memory is cleared"""
         super().clear_memory()
-        self.reset_quest()
+        self.reset_satisfaction()
 
     def get_quest_status(self):
         """Get current quest status for debugging"""
         return {
-            "completed": self.quest_completed,
+            "completed": self.satisfied,
             "keywords": self.quest_keywords,
             "total_keywords": len(self.quest_keywords)
         }
