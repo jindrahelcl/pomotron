@@ -37,7 +37,7 @@ class RaspiTRON:
         print("\r")
         print(f"[Sending: {message}]", file=sys.stderr, end="\r\n")
         stop_event = threading.Event()
-        geiger_thread = threading.Thread(target=geiger.run, args=(stop_event,))
+        geiger_thread = threading.Thread(target=geiger.run, args=(stop_event, "request"))
         geiger_thread.start()
         def stop_geiger(success=True):
             stop_event.set()
@@ -67,6 +67,9 @@ class RaspiTRON:
             tts_engine = data.get('tts_engine', 'gtts')
             tts_voice = data.get('tts_voice', None)
             print(f"{agent}: {bot_response}", end="\r\n")
+
+            # Switch to TTS mode during speech
+            geiger.switch_to_mode("tts")
             self.tts.say(bot_response, agent=agent, cb=stop_geiger, engine_type=tts_engine, voice=tts_voice)
         else:
             stop_geiger(beep=False)
