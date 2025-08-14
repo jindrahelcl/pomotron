@@ -22,7 +22,7 @@ class Sounds:
         self._load_sounds()
 
     def _load_sounds(self):
-        sound_files = ['keypress.wav', 'boop.wav', 'beep.wav']
+        sound_files = ['keypress.wav', 'boop.wav', 'beep.wav', 'beep-startup.wav']
         for filename in sound_files:
             try:
                 self.sounds[filename] = pygame.mixer.Sound(filename)
@@ -42,6 +42,11 @@ class Sounds:
 
     def play_boop(self):
         sound = self.sounds.get('boop.wav')
+        if sound:
+            sound.play()
+
+    def play_beep_startup(self):
+        sound = self.sounds.get('beep-startup.wav')
         if sound:
             sound.play()
 

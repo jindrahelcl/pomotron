@@ -92,6 +92,7 @@ class RaspiTRON:
     def run(self):
         self.tts = create_tts_manager()
         self.session = Session(self.sentence_cb)
+        sounds.play_beep_startup()
         try:
             self.last_read = ""
             while True:
