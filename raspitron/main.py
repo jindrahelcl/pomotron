@@ -34,6 +34,10 @@ class RaspiTRON:
         except ValueError:
             self.request_timeout = 30.0
 
+        # Pomo agent TTS configuration
+        self.pomo_tts_engine = os.environ.get('POMO_TTS_ENGINE', 'openai')
+        self.pomo_tts_voice = os.environ.get('POMO_TTS_VOICE', "alloy")
+
     def send_message(self, message: str):
         print("\r")
         print(f"[Sending: {message}]", file=sys.stderr, end="\r\n")
@@ -86,7 +90,7 @@ class RaspiTRON:
 
     def sentence_cb(self, sentence):
         sentence = sentence.strip()
-        self.tts.say(sentence, agent="pomo")
+        self.tts.say(sentence, agent="pomo", engine_type=self.pomo_tts_engine, voice=self.pomo_tts_voice)
         self.last_read = sentence
 
     def run(self):
@@ -100,7 +104,7 @@ class RaspiTRON:
                 if not line:
                     continue
                 if line != self.last_read:
-                    self.tts.say(line, agent="pomo")
+                    self.tts.say(line, agent="pomo", engine_type=self.pomo_tts_engine, voice=self.pomo_tts_voice)
                 sounds.play_beep()
                 self.tts.join()
                 self.send_message(line)
