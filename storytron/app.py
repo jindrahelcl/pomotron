@@ -4,7 +4,9 @@ import os
 import jsonlines
 from datetime import datetime
 from dotenv import load_dotenv
-from agents import StartAgent, DryGumAgent, JoystickAgent, ShotOutEyeAgent, AidaAgent, WasherWomanAgent, TradicniAgent, ConfessorAgent
+from agents.joystick import JoystickAgent
+from agents.confessor import ConfessorAgent
+from agents.openai import OpenAIAgent
 from agents.prompt_loader import load_prompt, save_prompt, list_available_prompts
 from story import Story
 
@@ -57,13 +59,13 @@ def get_current_history():
 def get_story():
     """Get a fresh story instance with loaded state for each request."""
     story = Story([
-        StartAgent(),
-        ShotOutEyeAgent(),
+        OpenAIAgent("start", "Start Agent"),
+        OpenAIAgent("shot_out_eye", "ShotOutEye Agent"),
         JoystickAgent(),
-        AidaAgent(),
-        DryGumAgent(),
-        WasherWomanAgent(),
-        TradicniAgent(),
+        OpenAIAgent("aida", "Aida Agent"),
+        OpenAIAgent("dry_gum", "DryGum Agent"),
+        OpenAIAgent("washer_woman", "WasherWoman Agent"),
+        OpenAIAgent("tradicni", "Tradicni Agent"),
         ConfessorAgent()
     ])
 
