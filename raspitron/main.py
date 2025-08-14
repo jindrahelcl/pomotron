@@ -37,6 +37,7 @@ class RaspiTRON:
     def send_message(self, message: str):
         print("\r")
         print(f"[Sending: {message}]", file=sys.stderr, end="\r\n")
+        self.play_on_enter()
         stop_event = threading.Event()
         geiger_thread = threading.Thread(target=geiger.run, args=(stop_event,))
         geiger_thread.start()
@@ -92,6 +93,15 @@ class RaspiTRON:
             sound.play()
         except (pygame.error, FileNotFoundError) as e:
             print(f"Error playing boop: {e}", file=sys.stderr)
+
+    def play_on_enter(self):
+        try:
+            if not pygame.mixer.get_init():
+                pygame.mixer.init()
+            sound = pygame.mixer.Sound('beep.wav')
+            sound.play()
+        except (pygame.error, FileNotFoundError) as e:
+            print(f"Error playing beep: {e}", file=sys.stderr)
 
     def sentence_cb(self, sentence):
         sentence = sentence.strip()
