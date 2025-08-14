@@ -257,7 +257,7 @@ class TtsManager:
             except queue.Empty:
                 continue
             except Exception as e:
-                print(f"[TTS error: {e}]", file=sys.stderr)
+                print(f"[TTS worker error: {e}]", file=sys.stderr)
 
     def _regular_synthesis(self, text: str, agent: str, cb, engine, voice=None):
         """Regular file-based synthesis and playback"""
