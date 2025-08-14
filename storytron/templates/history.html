@@ -28,8 +28,13 @@ function loadFullHistory() {
         const historyDiv = document.getElementById('fullMessageHistory');
         if (data.history && data.history.length > 0) {
             historyDiv.innerHTML = data.history.slice().reverse().map(msg => `
-                <div style="border: 1px solid #333; margin: 5px 0; padding: 10px; border-radius: 5px;">
-                    <div style="font-size: 0.8em; color: #888; margin-bottom: 5px;">
+                <div style="border: 1px solid #333; margin: 5px 0; padding: 10px; border-radius: 5px; position: relative;">
+                    <button onclick="deleteMessage('${msg.timestamp}')"
+                            style="position: absolute; top: 5px; right: 5px; background: #ff4444; color: white; border: none; border-radius: 50%; width: 25px; height: 25px; cursor: pointer; font-size: 14px; line-height: 1;"
+                            title="Smazat tuto zprávu"
+                            onmouseover="this.style.backgroundColor='#ff0000'"
+                            onmouseout="this.style.backgroundColor='#ff4444'">×</button>
+                    <div style="font-size: 0.8em; color: #888; margin-bottom: 5px; margin-right: 30px;">
                         ${new Date(msg.timestamp).toLocaleString()} |
                         Odesílatel: ${msg.sender === 'web' ? '👤 Web' : '🎮 Pomo'} |
                         Agent: ${msg.agent}
@@ -59,6 +64,23 @@ function clearFullHistory() {
         })
         .catch(error => {
             alert('Chyba při mazání historie: ' + error);
+        });
+    }
+}
+
+function deleteMessage(timestamp) {
+    if (confirm('Opravdu chcete smazat tuto zprávu?')) {
+        fetch(`/api/history/${encodeURIComponent(timestamp)}`, { method: 'DELETE' })
+        .then(response => response.json())
+        .then(data => {
+            if (data.error) {
+                alert('Chyba při mazání zprávy: ' + data.error);
+            } else {
+                loadFullHistory(); // Reload the history to reflect changes
+            }
+        })
+        .catch(error => {
+            alert('Chyba při mazání zprávy: ' + error);
         });
     }
 }

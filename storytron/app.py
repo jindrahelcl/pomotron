@@ -311,6 +311,28 @@ def clear_history():
 
     return jsonify({'message': 'History cleared'})
 
+@app.route('/api/history/<timestamp>', methods=['DELETE'])
+def delete_history_message(timestamp):
+    """Delete a specific message from history by timestamp."""
+    try:
+        current_history = load_history()
+        # Filter out the message with the specified timestamp
+        filtered_history = [msg for msg in current_history if msg.get('timestamp') != timestamp]
+
+        if len(filtered_history) == len(current_history):
+            return jsonify({'error': 'Message not found'}), 404
+
+        # Save the filtered history back
+        save_history(filtered_history)
+
+        return jsonify({
+            'message': 'Message deleted successfully',
+            'deleted_timestamp': timestamp,
+            'remaining_count': len(filtered_history)
+        })
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
 @app.route('/api/agents/<agent_id>/memory', methods=['GET'])
 def get_agent_memory(agent_id):
     story = get_story()
