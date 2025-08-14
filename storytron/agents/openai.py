@@ -20,7 +20,8 @@ class OpenAIAgent(BaseAgent):
         if self._client is None and os.environ.get('OPENAI_API_KEY'):
             self._client = openai.OpenAI(
                 api_key=os.environ.get('OPENAI_API_KEY'),
-                timeout=20.0
+                timeout=45,
+                max_retries=2  # Retry failed requests twice
             )
         return self._client
 
