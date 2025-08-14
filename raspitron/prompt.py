@@ -1,5 +1,6 @@
 from prompt_toolkit import PromptSession
 from prompt_toolkit.key_binding import KeyBindings
+from prompt_toolkit.keys import Keys
 from sounds import sounds
 
 PUNCT = ".!?"
@@ -23,25 +24,26 @@ class Session:
         self.sentence_cb = sentence_cb
         kb = KeyBindings()
 
-        # Add general key handler for keypress sound
-        @kb.add('<any>')
-        def _(event):
-            self.play_keypress()
-            # Let the default handler process the key
-            event.app.current_buffer.insert_text(event.data)
-
         for char in PUNCT:
             kb.add(char)(self.onpunctuation)
+
+        for key in (Keys.Any, Keys.Left, Keys.Right, Keys.Up, Keys.Down, Keys.Backspace):
+            kb.add(key)(self.play_keypress)
+
         self.prompt_session = PromptSession(key_bindings=kb)
 
-    def play_keypress(self):
+    @erring_handler
+    def play_keypress(self, event):
         sounds.play_keypress()
+        #event.app.key_processor.feed(event.key_sequence[0], first=True)
+        event.app.current_buffer.insert_text(event.data)
 
     @erring_handler
     def onpunctuation(self, event):
+        self.play_keypress(event)
         buf = event.app.current_buffer
-        key = event.key_sequence[0].key
-        buf.insert_text(key)
+        #key = event.key_sequence[0].key
+        #buf.insert_text(key)
         text = buf.text
         pos = buf.cursor_position
         sentence = self.extract_sentence(text, pos)
