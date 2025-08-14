@@ -8,7 +8,7 @@ class JoystickAgent(OpenAIAgent):
         # Quest system - simplified to just one word needed
         self.quest_keywords = [
             # Czech names
-            "tradicni", "tra", "tradiční"
+            "tradicni", "tradice", "tradiční"
         ]
 
     def check_quest_progress(self, message):
