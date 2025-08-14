@@ -35,8 +35,8 @@ class RaspiTRON:
             self.request_timeout = 30.0
 
         # Pomo agent TTS configuration
-        self.pomo_tts_engine = os.environ.get('POMO_TTS_ENGINE', 'openai')
-        self.pomo_tts_voice = os.environ.get('POMO_TTS_VOICE', "alloy")
+        self.pomo_tts_engine = os.environ.get('POMO_TTS_ENGINE', 'festival')
+        self.pomo_tts_voice = os.environ.get('POMO_TTS_VOICE', "ph")
 
     def send_message(self, message: str):
         print("\r")

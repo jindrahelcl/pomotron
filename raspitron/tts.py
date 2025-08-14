@@ -114,7 +114,7 @@ class OpenAiTtsEngine(TtsEngine):
         if not api_key:
             raise RuntimeError("OPENAI_API_KEY environment variable not set")
 
-        self.client = AsyncOpenAI(api_key=api_key, timeout=30.0)
+        self.client = AsyncOpenAI(api_key=api_key, timeout=50.0)
 
     def synthesize(self, text: str, filename: str, agent: str, voice: str = None):
         """Synthesize text to audio file using OpenAI TTS"""
