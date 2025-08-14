@@ -10,7 +10,7 @@ class GeigerPlayer:
         self.current_mode = None
         self.is_playing = False
         self.switch_event = threading.Event()
-        self.switch_to_mode = None
+        self.target_mode = None
         self.stop_event = None
 
         # File mappings - only known to this class
@@ -30,7 +30,7 @@ class GeigerPlayer:
     def switch_to_mode(self, mode):
         """Switch to a different mode (request/tts)"""
         if mode in self.mode_files:
-            self.switch_to_mode = mode
+            self.target_mode = mode
             self.switch_event.set()
         else:
             print(f"Warning: Unknown mode '{mode}'. Available modes: {list(self.mode_files.keys())}")
@@ -92,7 +92,7 @@ class GeigerPlayer:
             # Check for mode switch requests
             if self.switch_event.wait(timeout=0.1):
                 self.switch_event.clear()
-                if self.switch_to_mode and self.switch_to_mode != self.current_mode:
+                if self.target_mode and self.target_mode != self.current_mode:
                     self._switch_mode()
 
         # Cleanup
@@ -107,7 +107,7 @@ class GeigerPlayer:
 
         # Switch to new mode
         old_mode = self.current_mode
-        self.current_mode = self.switch_to_mode
+        self.current_mode = self.target_mode
         new_file = self.mode_files[self.current_mode]
 
         # Start new file if not already playing, or resume if paused
@@ -118,7 +118,7 @@ class GeigerPlayer:
             self.channels[new_file].unpause()
 
         print(f"Switched from mode '{old_mode}' to '{self.current_mode}'")
-        self.switch_to_mode = None
+        self.target_mode = None
 
     def _cleanup(self):
         """Clean up resources"""
