@@ -28,7 +28,8 @@ class Sounds:
             'beep': pygame.mixer.Channel(2),
             'beep-startup': pygame.mixer.Channel(3),
             'geiger': pygame.mixer.Channel(4),
-            'music': pygame.mixer.Channel(5)
+            'music': pygame.mixer.Channel(5),
+            'reload': pygame.mixer.Channel(6)
         }
 
         self.sounds = {}
@@ -37,7 +38,7 @@ class Sounds:
         self._load_sounds()
 
     def _load_sounds(self):
-        sound_files = ['keypress.wav', 'boop.wav', 'beep.wav', 'beep-startup.wav', 'geiger.wav']
+        sound_files = ['keypress.wav', 'boop.wav', 'beep.wav', 'beep-startup.wav', 'geiger.wav', 'reload.wav']
 
         # Add first MP3 file from ~/Music if available
         music_files = glob.glob(os.path.expanduser('~/Music/*.mp3'))
@@ -75,16 +76,16 @@ class Sounds:
         if sound:
             self.channels['beep-startup'].play(sound)
 
+    def play_reload(self):
+        sound = self.sounds.get('reload.wav')
+        if sound:
+            self.channels['reload'].play(sound)
+
     def play_music(self):
         if self._music_file:
             sound = self.sounds.get(self._music_file)
             if sound:
                 self.channels['music'].play(sound)
-
-    def play_reload(self):
-        """Reload and play the music file (useful if the music directory has changed)"""
-        self._load_sounds()
-        self.play_music()
 
     def start_geiger(self):
         """Start geiger counter sound (resumes if paused, starts fresh if stopped)"""
