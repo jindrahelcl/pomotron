@@ -47,12 +47,10 @@ def run(stop_event):
     print(f"Playing geiger audio: {wav_file_path}")
 
     # Keep the thread alive until stop is requested
-    while not stop_event.is_set():
-        time.sleep(0.1)
+    stop_event.wait()
 
     # Cleanup
     pygame.mixer.music.stop()
-    pygame.mixer.quit()
     _is_playing = False
 
 if __name__ == "__main__":
