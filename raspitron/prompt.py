@@ -76,6 +76,11 @@ class Session:
             sounds.play_keypress()
             event.app.current_buffer.cursor_position = len(event.app.current_buffer.text)
 
+        @kb.add('f10')
+        @erring_handler
+        def handle_end(event):
+            raise EOFError
+
         self.prompt_session = PromptSession(key_bindings=kb)
 
     def play_keypress(self):
