@@ -5,7 +5,7 @@ from .openai import OpenAIAgent
 
 class ConfessorAgent(OpenAIAgent):
     def __init__(self):
-        super().__init__("confessor", "Confessor Unit MK-VII", memory_size=15, enable_memory=True)
+        super().__init__("confessor", "Confessor Unit MK-VII")
         self.sins_collected = 0
         self.secrets_revealed = []
 

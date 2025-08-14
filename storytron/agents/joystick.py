@@ -5,7 +5,7 @@ from .openai import OpenAIAgent
 
 class JoystickAgent(OpenAIAgent):
     def __init__(self):
-        super().__init__("joystick", "Mystický Pouťový Věštec-Arkáda", memory_size=20, enable_memory=True)
+        super().__init__("joystick", "Mystický Pouťový Věštec-Arkáda")
 
         # Quest system - simplified to just one word needed
         self.quest_completed = False
@@ -16,18 +16,6 @@ class JoystickAgent(OpenAIAgent):
             "pivo", "láhvač", "láhev", "knedlík", "svíčková", "prag", "praha",
             # Gaming related
             "joystick", "kontroler", "hry", "tradice", "tradiční"
-        ]
-
-        # Mystical responses for different states
-        self.mystical_responses = [
-            "🎭 Vidím v křišťálové kouli... pixelový tanec v arkádě! 🎮",
-            "🔮 Tvoje cesta vede přes digitální most... tam kde štěkají mystičtí psi! 🐕",
-            "🎪 Hledáš Level 5, ale musíš nejdřív dokončit Level 3! 🎯",
-            "🎨 V pixelovém světě se skrývá tajemství... tanec světel v arkádě! ✨",
-            "🎲 Karty mi říkají... cesta k pokladu vede přes pixelový tanec! 🃏",
-            "🎪 Vidím budoucnost... budeš tančit v arkádě pixelů! 🎭",
-            "🔮 Tvoje hvězda svítí... ale musíš najít pixelový klíč! ⭐",
-            "🎮 V mystickém světě her... tanec je cesta k pravdě! 🎪"
         ]
 
     def check_quest_progress(self, message):

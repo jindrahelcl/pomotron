@@ -2,7 +2,7 @@ from collections import deque
 from datetime import datetime
 
 class BaseAgent:
-    def __init__(self, agent_id, name, memory_size=20, enable_memory=True):
+    def __init__(self, agent_id, name, memory_size=50, enable_memory=True):
         self.agent_id = agent_id
         self.name = name
         self.satisfied = False

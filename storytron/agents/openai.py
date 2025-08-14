@@ -3,7 +3,7 @@ import openai
 from .base import BaseAgent
 
 class OpenAIAgent(BaseAgent):
-    def __init__(self, agent_id, name, memory_size=20, enable_memory=True):
+    def __init__(self, agent_id, name, memory_size=50, enable_memory=True):
         super().__init__(agent_id, name, memory_size, enable_memory)
         self._client = None
 

@@ -3,7 +3,7 @@ from .openai import OpenAIAgent
 
 class StartAgent(OpenAIAgent):
     def __init__(self):
-        super().__init__("start", "Start Agent", memory_size=10, enable_memory=True)
+        super().__init__("start", "Start Agent")
 
         # Initialize conversation history with the system message from file
         system_prompt = load_prompt("start")
