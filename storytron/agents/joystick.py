@@ -1,11 +1,9 @@
-import os
-import openai
 import random
 from .openai import OpenAIAgent
 
 class JoystickAgent(OpenAIAgent):
     def __init__(self):
-        super().__init__("joystick", "Mystický Pouťový Věštec-Arkáda")
+        super().__init__("joystick", "Mystický Pouťový Věštec-Arkáda", load_system_prompt=False)
 
         # Quest system - simplified to just one word needed
         self.quest_completed = False

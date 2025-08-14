@@ -4,7 +4,7 @@ import os
 import jsonlines
 from datetime import datetime
 from dotenv import load_dotenv
-from agents import DefaultAgent, NegativeAgent, StartAgent, DryGumAgent, JoystickAgent, ShotOutEyeAgent, AidaAgent, WasherWomanAgent, TradicniAgent, ConfessorAgent
+from agents import StartAgent, DryGumAgent, JoystickAgent, ShotOutEyeAgent, AidaAgent, WasherWomanAgent, TradicniAgent, ConfessorAgent
 from agents.prompt_loader import load_prompt, save_prompt, list_available_prompts
 from story import Story
 
@@ -57,8 +57,6 @@ def get_current_history():
 def get_story():
     """Get a fresh story instance with loaded state for each request."""
     story = Story([
-        DefaultAgent(),
-        NegativeAgent(),
         StartAgent(),
         ShotOutEyeAgent(),
         JoystickAgent(),
