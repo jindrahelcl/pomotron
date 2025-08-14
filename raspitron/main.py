@@ -71,7 +71,7 @@ class RaspiTRON:
             sounds.play_boop()
             self.tts.say(bot_response, agent=agent, cb=stop_geiger, engine_type=tts_engine, voice=tts_voice)
         else:
-            stop_geiger(beep=False)
+            stop_geiger(success=False)
 
         # Wait for the tts to say what it wants to say
         self.tts.join()
