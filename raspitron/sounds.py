@@ -24,14 +24,15 @@ class Sounds:
             'keypress': pygame.mixer.Channel(0),
             'boop': pygame.mixer.Channel(1),
             'beep': pygame.mixer.Channel(2),
-            'beep-startup': pygame.mixer.Channel(3)
+            'beep-startup': pygame.mixer.Channel(3),
+            'geiger': pygame.mixer.Channel(4)
         }
 
         self.sounds = {}
         self._load_sounds()
 
     def _load_sounds(self):
-        sound_files = ['keypress.wav', 'boop.wav', 'beep.wav', 'beep-startup.wav']
+        sound_files = ['keypress.wav', 'boop.wav', 'beep.wav', 'beep-startup.wav', 'geiger.wav']
         for filename in sound_files:
             try:
                 self.sounds[filename] = pygame.mixer.Sound(filename)
@@ -58,6 +59,23 @@ class Sounds:
         sound = self.sounds.get('beep-startup.wav')
         if sound:
             self.channels['beep-startup'].play(sound)
+
+    def start_geiger(self):
+        sound = self.sounds.get('geiger.wav')
+        if sound:
+            self.channels['geiger'].play(sound, loops=-1)  # Loop forever
+
+    def pause_geiger(self):
+        self.channels['geiger'].pause()
+
+    def resume_geiger(self):
+        self.channels['geiger'].unpause()
+
+    def stop_geiger(self):
+        self.channels['geiger'].stop()
+
+    def is_geiger_playing(self):
+        return self.channels['geiger'].get_busy()
 
 # Global sounds instance
 sounds = Sounds()
