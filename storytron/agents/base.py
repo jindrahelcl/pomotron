@@ -6,7 +6,7 @@ class BaseAgent:
         self.agent_id = agent_id
         self.name = name
         self.satisfied = False
-        
+
         # Memory system
         self.enable_memory = enable_memory
         self.memory_size = memory_size
@@ -20,7 +20,7 @@ class BaseAgent:
         """Add a conversation exchange to memory"""
         if not self.enable_memory or self.conversation_memory is None:
             return
-        
+
         exchange = {
             "timestamp": datetime.now().isoformat(),
             "user": user_message,
@@ -32,26 +32,26 @@ class BaseAgent:
         """Get conversation history formatted for OpenAI API"""
         if not self.enable_memory or not self.conversation_memory:
             return []
-        
+
         messages = []
         for exchange in self.conversation_memory:
             messages.append({"role": "user", "content": exchange["user"]})
             messages.append({"role": "assistant", "content": exchange["agent"]})
-        
+
         return messages
 
     def get_memory_summary(self):
         """Get a text summary of recent conversation for context"""
         if not self.enable_memory or not self.conversation_memory:
             return ""
-        
+
         summary_parts = []
         recent_exchanges = list(self.conversation_memory)[-5:]  # Last 5 exchanges
-        
+
         for exchange in recent_exchanges:
             summary_parts.append(f"User: {exchange['user']}")
             summary_parts.append(f"Agent: {exchange['agent']}")
-        
+
         return "\n".join(summary_parts)
 
     def clear_memory(self):
@@ -63,7 +63,7 @@ class BaseAgent:
         """Get memory state for persistence"""
         if not self.enable_memory or self.conversation_memory is None:
             return None
-        
+
         return {
             "memory_size": self.memory_size,
             "enable_memory": self.enable_memory,
@@ -74,10 +74,10 @@ class BaseAgent:
         """Restore memory state from persistence"""
         if not memory_state:
             return
-        
+
         self.memory_size = memory_state.get("memory_size", 20)
         self.enable_memory = memory_state.get("enable_memory", True)
-        
+
         if self.enable_memory:
             self.conversation_memory = deque(maxlen=self.memory_size)
             for exchange in memory_state.get("conversation_memory", []):
@@ -100,9 +100,9 @@ class BaseAgent:
             "satisfied": self.satisfied,
             "memory_enabled": self.enable_memory
         }
-        
+
         if self.enable_memory and self.conversation_memory is not None:
             result["memory_count"] = len(self.conversation_memory)
             result["memory_size"] = self.memory_size
-        
+
         return result
