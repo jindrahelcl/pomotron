@@ -41,6 +41,7 @@ class RaspiTRON:
         self.disable_sentence_echo = (os.environ.get("DISABLE_SENTENCE_ECHO", "1") == "1")
 
     def send_message(self, message: str):
+        victory = False
         print("\r")
         print(f"[Sending: {message}]", file=sys.stderr, end="\r\n")
         stop_event = threading.Event()
@@ -73,6 +74,7 @@ class RaspiTRON:
             agent = data.get('active_agent', 'bot')
             tts_engine = data.get('tts_engine', 'gtts')
             tts_voice = data.get('tts_voice', None)
+            victory = data.get('victory', False)
             print(f"{agent}: {bot_response}", end="\r\n")
             sounds.play_boop()
             self.tts.say(bot_response, agent=agent, cb=stop_geiger, engine_type=tts_engine, voice=tts_voice)
@@ -81,6 +83,9 @@ class RaspiTRON:
 
         # Wait for the tts to say what it wants to say
         self.tts.join()
+        if victory:
+            sounds.play_music()
+
 
     def beep(self):
         if not BeePlayer:

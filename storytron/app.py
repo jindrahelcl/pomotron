@@ -265,7 +265,8 @@ def chat():
         'agent_response': agent_response,
         'timestamp': timestamp,
         'tts_engine': story.active_agent.tts_engine,
-        'tts_voice': story.active_agent.tts_voice
+        'tts_voice': story.active_agent.tts_voice,
+        'victory': story.active_agent.is_satisfied() and story.current_id == "tradicni"
     })
 
 @app.route('/api/history', methods=['GET'])
