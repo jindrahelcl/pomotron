@@ -18,6 +18,15 @@ class Sounds:
         if not pygame.mixer.get_init():
             pygame.mixer.init()
 
+        # Reserve channels for each sound type
+        pygame.mixer.set_num_channels(8)  # Ensure we have enough channels
+        self.channels = {
+            'keypress': pygame.mixer.Channel(0),
+            'boop': pygame.mixer.Channel(1),
+            'beep': pygame.mixer.Channel(2),
+            'beep-startup': pygame.mixer.Channel(3)
+        }
+
         self.sounds = {}
         self._load_sounds()
 
@@ -33,22 +42,22 @@ class Sounds:
     def play_keypress(self):
         sound = self.sounds.get('keypress.wav')
         if sound:
-            sound.play()
+            self.channels['keypress'].play(sound)
 
     def play_beep(self):
         sound = self.sounds.get('beep.wav')
         if sound:
-            sound.play()
+            self.channels['beep'].play(sound)
 
     def play_boop(self):
         sound = self.sounds.get('boop.wav')
         if sound:
-            sound.play()
+            self.channels['boop'].play(sound)
 
     def play_beep_startup(self):
         sound = self.sounds.get('beep-startup.wav')
         if sound:
-            sound.play()
+            self.channels['beep-startup'].play(sound)
 
 # Global sounds instance
 sounds = Sounds()
