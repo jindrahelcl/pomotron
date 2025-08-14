@@ -92,6 +92,7 @@ def get_story():
         OpenAIAgent("dry_gum", "DryGum Agent"),
         OpenAIAgent("washer_woman", "WasherWoman Agent"),
         OpenAIAgent("tradicni", "Tradicni Agent"),
+        OpenAIAgent("nahodny_kolemjdouci", "Náhodný Kolemjdoucí"),
         ConfessorAgent()
     ])
 
