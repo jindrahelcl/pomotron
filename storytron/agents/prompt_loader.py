@@ -18,9 +18,12 @@ def load_prompt(agent_id, satisfied=False):
     except FileNotFoundError:
         return f"Error: Prompt file not found for agent {agent_id}"
 
-def save_prompt(agent_id, content):
+def save_prompt(agent_id, content, satisfied=False):
     """Save system prompt for an agent to file."""
-    prompt_file = os.path.join(os.path.dirname(__file__), '..', 'prompts', f'{agent_id}.txt')
+    if satisfied:
+        prompt_file = os.path.join(os.path.dirname(__file__), '..', 'prompts', f'{agent_id}_satisfied.txt')
+    else:
+        prompt_file = os.path.join(os.path.dirname(__file__), '..', 'prompts', f'{agent_id}.txt')
     os.makedirs(os.path.dirname(prompt_file), exist_ok=True)
     with open(prompt_file, 'w', encoding='utf-8') as f:
         f.write(content)
@@ -36,7 +39,7 @@ def list_available_prompts():
     for filename in os.listdir(prompts_dir):
         if filename.endswith('.txt'):
             if filename.endswith('_satisfied.txt'):
-                agent_id = filename[:-13]  # Remove _satisfied.txt extension
+                agent_id = filename[:-14]  # Remove _satisfied.txt extension
                 satisfied_prompts.append(agent_id)
             else:
                 agent_id = filename[:-4]  # Remove .txt extension

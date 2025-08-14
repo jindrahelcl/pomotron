@@ -141,21 +141,43 @@ def web_history():
 
 @app.route('/web/prompts')
 def web_prompts():
-    available_prompts = list_available_prompts()
+    regular_prompts, satisfied_prompts = list_available_prompts()
     prompts_data = []
-    for agent_id in available_prompts:
+
+    # Add regular prompts
+    for agent_id in regular_prompts:
         try:
             content = load_prompt(agent_id)
             prompts_data.append({
                 'agent_id': agent_id,
                 'content': content,
-                'preview': content[:200] + '...' if len(content) > 200 else content
+                'preview': content[:200] + '...' if len(content) > 200 else content,
+                'type': 'regular'
             })
         except Exception as e:
             prompts_data.append({
                 'agent_id': agent_id,
                 'content': f"Error loading prompt: {str(e)}",
-                'preview': f"Error: {str(e)}"
+                'preview': f"Error: {str(e)}",
+                'type': 'regular'
+            })
+
+    # Add satisfied prompts
+    for agent_id in satisfied_prompts:
+        try:
+            content = load_prompt(agent_id, satisfied=True)
+            prompts_data.append({
+                'agent_id': f"{agent_id}_satisfied",
+                'content': content,
+                'preview': content[:200] + '...' if len(content) > 200 else content,
+                'type': 'satisfied'
+            })
+        except Exception as e:
+            prompts_data.append({
+                'agent_id': f"{agent_id}_satisfied",
+                'content': f"Error loading prompt: {str(e)}",
+                'preview': f"Error: {str(e)}",
+                'type': 'satisfied'
             })
 
     return render_template('prompts.html', prompts=prompts_data)
@@ -371,14 +393,16 @@ def get_agent_history_count(agent_id):
 @app.route('/api/prompts', methods=['GET'])
 def list_prompts():
     """List all available prompts."""
-    available_prompts = list_available_prompts()
+    regular_prompts, satisfied_prompts = list_available_prompts()
     prompts_data = []
 
-    for agent_id in available_prompts:
+    # Add regular prompts
+    for agent_id in regular_prompts:
         try:
             content = load_prompt(agent_id)
             prompts_data.append({
                 'agent_id': agent_id,
+                'type': 'regular',
                 'content': content,
                 'preview': content[:200] + '...' if len(content) > 200 else content,
                 'length': len(content)
@@ -386,6 +410,26 @@ def list_prompts():
         except Exception as e:
             prompts_data.append({
                 'agent_id': agent_id,
+                'type': 'regular',
+                'error': str(e),
+                'preview': f"Error: {str(e)}"
+            })
+
+    # Add satisfied prompts
+    for agent_id in satisfied_prompts:
+        try:
+            content = load_prompt(agent_id, satisfied=True)
+            prompts_data.append({
+                'agent_id': agent_id,
+                'type': 'satisfied',
+                'content': content,
+                'preview': content[:200] + '...' if len(content) > 200 else content,
+                'length': len(content)
+            })
+        except Exception as e:
+            prompts_data.append({
+                'agent_id': agent_id,
+                'type': 'satisfied',
                 'error': str(e),
                 'preview': f"Error: {str(e)}"
             })
@@ -399,7 +443,13 @@ def list_prompts():
 def get_prompt(agent_id):
     """Get prompt content for a specific agent."""
     try:
-        content = load_prompt(agent_id)
+        # Check if this is a satisfied prompt
+        if agent_id.endswith('_satisfied'):
+            base_agent_id = agent_id[:-10]  # Remove '_satisfied'
+            content = load_prompt(base_agent_id, satisfied=True)
+        else:
+            content = load_prompt(agent_id)
+
         return jsonify({
             'agent_id': agent_id,
             'content': content,
@@ -419,7 +469,13 @@ def update_prompt(agent_id):
     content = data['content']
 
     try:
-        save_prompt(agent_id, content)
+        # Check if this is a satisfied prompt
+        if agent_id.endswith('_satisfied'):
+            base_agent_id = agent_id[:-10]  # Remove '_satisfied'
+            save_prompt(base_agent_id, content, satisfied=True)
+        else:
+            save_prompt(agent_id, content, satisfied=False)
+
         return jsonify({
             'message': f'Prompt updated for agent {agent_id}',
             'agent_id': agent_id,
