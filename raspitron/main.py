@@ -104,7 +104,7 @@ class RaspiTRON:
                 self.tts.join()
                 self.send_message(line)
         except EOFError:
-            pass
+            sounds.play_reload()
         finally:
             self.tts.shutdown()
 
