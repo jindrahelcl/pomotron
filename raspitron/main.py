@@ -37,6 +37,7 @@ class RaspiTRON:
         # Pomo agent TTS configuration
         self.pomo_tts_engine = os.environ.get('POMO_TTS_ENGINE', 'festival')
         self.pomo_tts_voice = os.environ.get('POMO_TTS_VOICE', "ph")
+        self.disable_sentence_echo = (os.environ.get("DISABLE_SENTENCE_ECHO", "1") == "1")
 
     def send_message(self, message: str):
         print("\r")
@@ -89,6 +90,8 @@ class RaspiTRON:
         player.close()
 
     def sentence_cb(self, sentence):
+        if self.disable_sentence_echo:
+            return
         sentence = sentence.strip()
         self.tts.say(sentence, agent="pomo", engine_type=self.pomo_tts_engine, voice=self.pomo_tts_voice)
         self.last_read = sentence
