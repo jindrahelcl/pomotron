@@ -89,25 +89,17 @@ class RaspiTRON:
         player.play(-0.02, 0.02)
         player.close()
 
-    def sentence_cb(self, sentence):
-        if self.disable_sentence_echo:
-            return
-        sentence = sentence.strip()
-        self.tts.say(sentence, agent="pomo", engine_type=self.pomo_tts_engine, voice=self.pomo_tts_voice)
-        self.last_read = sentence
-
     def run(self):
         self.tts = create_tts_manager()
-        self.session = Session(self.sentence_cb)
+        self.session = Session()
         sounds.play_beep_startup()
         try:
-            self.last_read = ""
             while True:
                 line = self.session.prompt().strip()
                 if not line:
                     continue
-                if line != self.last_read:
-                    self.tts.say(line, agent="pomo", engine_type=self.pomo_tts_engine, voice=self.pomo_tts_voice)
+
+                self.tts.say(line, agent="pomo", engine_type=self.pomo_tts_engine, voice=self.pomo_tts_voice)
                 sounds.play_beep()
                 self.tts.join()
                 self.send_message(line)
