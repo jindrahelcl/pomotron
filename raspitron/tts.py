@@ -114,7 +114,7 @@ class OpenAiTtsEngine(TtsEngine):
         if not api_key:
             raise RuntimeError("OPENAI_API_KEY environment variable not set")
 
-        self.client = AsyncOpenAI(api_key=api_key)
+        self.client = AsyncOpenAI(api_key=api_key, timeout=30.0)
 
     def synthesize(self, text: str, filename: str, agent: str, voice: str = None):
         """Synthesize text to audio file using OpenAI TTS"""
@@ -243,9 +243,7 @@ class TtsManager:
 
                 # Use streaming mode for OpenAI if requested
                 if use_streaming and isinstance(engine, OpenAiTtsEngine):
-                    # Run streaming synthesis
                     asyncio.run(engine.synthesize_and_play_streaming(text, agent, voice))
-
                     if cb:
                         cb()
                 else:
@@ -257,7 +255,8 @@ class TtsManager:
             except queue.Empty:
                 continue
             except Exception as e:
-                print(f"[TTS worker error: {e}]", file=sys.stderr)
+                print(f"[TTS worker error (engine {engine_type}): {e}]", file=sys.stderr)
+                self._tts_queue.task_done()
 
     def _regular_synthesis(self, text: str, agent: str, cb, engine, voice=None):
         """Regular file-based synthesis and playback"""
@@ -307,11 +306,8 @@ class TtsManager:
     def shutdown(self):
         self.running = False
         if self._tts_thread and self._tts_thread.is_alive():
-            try:
-                self._tts_queue.put_nowait((None, None, None, False, None, None))
-                self._tts_thread.join(timeout=1.0)
-            except:
-                pass
+            self._tts_queue.put_nowait((None, None, None, False, None, None))
+            self._tts_thread.join(timeout=1.0)
 
 def create_tts_manager() -> TtsManager:
     lang = os.environ.get('RASPITRON_TTS_LANG', 'cs')
