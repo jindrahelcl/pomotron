@@ -2,8 +2,8 @@ import random
 from .openai import OpenAIAgent
 
 class ConfessorAgent(OpenAIAgent):
-    def __init__(self):
-        super().__init__("confessor", "Confessor Unit MK-VII", load_system_prompt=False)
+    def __init__(self, tts_engine='openai', tts_voice=None):
+        super().__init__("confessor", "Confessor Unit MK-VII", load_system_prompt=False, tts_engine=tts_engine, tts_voice=tts_voice)
         self.sins_collected = 0
         self.secrets_revealed = []
 

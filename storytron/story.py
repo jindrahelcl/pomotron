@@ -62,14 +62,16 @@ class Story:
         agents_state = {}
         for aid, a in self._agents.items():
             agent_state = {
-                'satisfied': getattr(a, 'satisfied', False)
+                'satisfied': getattr(a, 'satisfied', False),
+                'tts_engine': getattr(a, 'tts_engine', 'gtts'),
+                'tts_voice': getattr(a, 'tts_voice', 'cs')
             }
             # Add memory state if agent has memory enabled
             memory_state = a.get_memory_state()
             if memory_state:
                 agent_state['memory'] = memory_state
             agents_state[aid] = agent_state
-            
+
         return {
             'current_id': self.current_id,
             'agents': agents_state
@@ -86,6 +88,11 @@ class Story:
                 # Restore satisfaction state
                 if 'satisfied' in st:
                     setattr(self._agents[aid], 'satisfied', st['satisfied'])
+                # Restore TTS configuration
+                if 'tts_engine' in st:
+                    setattr(self._agents[aid], 'tts_engine', st['tts_engine'])
+                if 'tts_voice' in st:
+                    setattr(self._agents[aid], 'tts_voice', st['tts_voice'])
                 # Restore memory state
                 if 'memory' in st:
                     self._agents[aid].set_memory_state(st['memory'])

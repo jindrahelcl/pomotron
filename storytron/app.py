@@ -231,10 +231,12 @@ def chat():
     append_to_history(entry)
 
     return jsonify({
-    'active_agent': story.current_id,
+        'active_agent': story.current_id,
         'user_message': message,
         'agent_response': agent_response,
-        'timestamp': timestamp
+        'timestamp': timestamp,
+        'tts_engine': story.active_agent.tts_engine,
+        'tts_voice': story.active_agent.tts_voice
     })
 
 @app.route('/api/history', methods=['GET'])
@@ -396,6 +398,58 @@ def update_prompt(agent_id):
         })
     except Exception as e:
         return jsonify({'error': str(e)}), 500
+
+@app.route('/api/agents/<agent_id>/tts', methods=['GET'])
+def get_agent_tts_config(agent_id):
+    """Get TTS configuration for a specific agent."""
+    story = get_story()
+    if agent_id not in story.agents:
+        return jsonify({'error': f'Agent {agent_id} not found'}), 404
+
+    agent = story.agents[agent_id]
+    return jsonify({
+        'agent_id': agent_id,
+        'tts_engine': agent.tts_engine,
+        'tts_voice': agent.tts_voice,
+        'supported_voices': agent.get_supported_voices()
+    })
+
+@app.route('/api/agents/<agent_id>/tts', methods=['PUT'])
+def update_agent_tts_config(agent_id):
+    """Update TTS configuration for a specific agent."""
+    story = get_story()
+    if agent_id not in story.agents:
+        return jsonify({'error': f'Agent {agent_id} not found'}), 404
+
+    data = request.get_json()
+    if not data:
+        return jsonify({'error': 'Request body is required'}), 400
+
+    agent = story.agents[agent_id]
+
+    try:
+        engine = data.get('tts_engine', agent.tts_engine)
+        voice = data.get('tts_voice', agent.tts_voice)
+
+        agent.set_tts_config(engine, voice)
+        story._save_state()
+
+        return jsonify({
+            'message': f'TTS configuration updated for agent {agent_id}',
+            'agent_id': agent_id,
+            'tts_engine': agent.tts_engine,
+            'tts_voice': agent.tts_voice
+        })
+    except ValueError as e:
+        return jsonify({'error': str(e)}), 400
+
+@app.route('/api/tts/engines', methods=['GET'])
+def get_tts_engines():
+    """Get available TTS engines and their supported voices."""
+    from agents.base import BaseAgent
+    return jsonify({
+        'engines': BaseAgent.TTS_ENGINES
+    })
 
 @app.errorhandler(404)
 def not_found(error):

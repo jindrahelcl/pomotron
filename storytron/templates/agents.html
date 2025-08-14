@@ -16,6 +16,24 @@
         <p><strong>ID:</strong> <code>{{ agent.id }}</code></p>
         <p><strong>Spokojen:</strong> {{ '😊 ANO' if agent.satisfied else '😔 NE' }}</p>
         <p><strong>Historie:</strong> <span id="history-count-{{ agent.id }}">...</span> zpráv</p>
+        <p><strong>TTS:</strong> {{ agent.tts_engine }} ({{ agent.tts_voice }})</p>
+
+        <!-- TTS Configuration -->
+        <div class="tts-config" style="margin: 10px 0; padding: 10px; border: 1px solid #444; border-radius: 4px;">
+            <strong>🔊 TTS nastavení:</strong>
+            <select id="tts-engine-{{ agent.id }}" onchange="updateTTSVoices('{{ agent.id }}', this.value)" style="margin: 5px; background-color: #2a2a2a; color: #cccccc; border: 1px solid #555;">
+                <option value="festival" {{ 'selected' if agent.tts_engine == 'festival' else '' }}>Festival</option>
+                <option value="gtts" {{ 'selected' if agent.tts_engine == 'gtts' else '' }}>Google TTS</option>
+                <option value="openai" {{ 'selected' if agent.tts_engine == 'openai' else '' }}>OpenAI TTS</option>
+                <option value="gemini" {{ 'selected' if agent.tts_engine == 'gemini' else '' }}>Gemini TTS</option>
+            </select>
+            <select id="tts-voice-{{ agent.id }}" style="margin: 5px; background-color: #2a2a2a; color: #cccccc; border: 1px solid #555;">
+                <!-- Voices populated by JavaScript -->
+            </select>
+            <button type="button" class="btn" style="font-size: 10px; padding: 4px 8px; margin-left: 5px;" onclick="saveTTSConfig('{{ agent.id }}')">
+                💾 Uložit
+            </button>
+        </div>
 
         <div style="margin-top: 10px;">
             <form method="POST" action="{{ url_for('toggle_agent_satisfaction') }}" style="display: inline;">
@@ -24,7 +42,7 @@
                     {{ 'Nasrat' if agent.satisfied else 'Uspokojit' }}
                 </button>
             </form>
-            
+
             <button type="button" class="btn" style="background-color: #006600; border-color: #00ff00; color: #99ff99; font-size: 12px; padding: 8px 12px; margin-left: 5px;" onclick="resetAgentHistory('{{ agent.id }}', '{{ agent.name }}')">
                 🗑️ Resetovat historii
             </button>
@@ -56,7 +74,7 @@
                 🔄 Resetovat příběh
             </button>
         </form>
-        
+
         <button type="button" class="btn" style="background-color: #cc6600; border-color: #ff9900; color: #ffcc99; margin-left: 10px;" onclick="resetAllHistory()">
             🗑️ Resetovat celou historii
         </button>
@@ -74,15 +92,102 @@
 
 {% block scripts %}
 <script>
-// Auto-refresh každých 10 sekund
-setInterval(() => {
-    location.reload();
-}, 10000);
-
 // Load history counts for all agents when page loads
 document.addEventListener('DOMContentLoaded', function() {
     loadAllAgentHistoryCounts();
+    loadTTSEnginesAndInitialize();
 });
+
+// TTS Configuration
+let ttsEngines = {};
+
+function loadTTSEnginesAndInitialize() {
+    fetch('/api/tts/engines')
+    .then(response => response.json())
+    .then(data => {
+        ttsEngines = data.engines;
+        // Initialize TTS voice dropdowns for all agents
+        const agentCards = document.querySelectorAll('.agent-card');
+        agentCards.forEach(card => {
+            const agentId = card.querySelector('h3').nextElementSibling.querySelector('code').textContent;
+            const engineSelect = document.getElementById(`tts-engine-${agentId}`);
+            if (engineSelect) {
+                updateTTSVoices(agentId, engineSelect.value);
+            }
+        });
+    })
+    .catch(error => {
+        console.error('Error loading TTS engines:', error);
+    });
+}
+
+function updateTTSVoices(agentId, engine) {
+    const voiceSelect = document.getElementById(`tts-voice-${agentId}`);
+    if (!voiceSelect || !ttsEngines[engine]) return;
+
+    // Clear existing options
+    voiceSelect.innerHTML = '';
+
+    // Add voice options for the selected engine
+    ttsEngines[engine].forEach(voice => {
+        const option = document.createElement('option');
+        option.value = voice;
+        option.textContent = voice;
+        voiceSelect.appendChild(option);
+    });
+
+    // Load current agent TTS config to set the correct voice
+    fetch(`/api/agents/${agentId}/tts`)
+    .then(response => response.json())
+    .then(data => {
+        if (data.tts_engine === engine && data.tts_voice) {
+            voiceSelect.value = data.tts_voice;
+        }
+    })
+    .catch(error => {
+        console.error(`Error loading TTS config for agent ${agentId}:`, error);
+    });
+}
+
+function saveTTSConfig(agentId) {
+    console.log('saveTTSConfig called with agentId:', agentId);
+    const engineSelect = document.getElementById(`tts-engine-${agentId}`);
+    const voiceSelect = document.getElementById(`tts-voice-${agentId}`);
+    console.log('engineSelect:', engineSelect, 'voiceSelect:', voiceSelect);
+
+    if (!engineSelect || !voiceSelect) {
+        console.log('Missing elements, returning early');
+        return;
+    }
+
+    const config = {
+        tts_engine: engineSelect.value,
+        tts_voice: voiceSelect.value
+    };
+
+    fetch(`/api/agents/${agentId}/tts`, {
+        method: 'PUT',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(config)
+    })
+    .then(response => response.json())
+    .then(data => {
+        console.log('TTS save response:', data);
+        if (data.message) {
+            console.log('Calling showSuccessToast');
+            showSuccessToast(`TTS konfigurace pro agenta "${agentId}" byla úspěšně uložena!`);
+        } else {
+            console.log('Calling showErrorToast');
+            showErrorToast('Chyba při ukládání TTS konfigurace: ' + (data.error || 'Neznámá chyba'));
+        }
+    })
+    .catch(error => {
+        console.log('TTS save error:', error);
+        showErrorToast('Chyba při ukládání TTS konfigurace: ' + error);
+    });
+}
 
 function loadAllAgentHistoryCounts() {
     // Get all agent IDs from the page
@@ -124,15 +229,15 @@ function resetAgentHistory(agentId, agentName) {
         .then(response => response.json())
         .then(data => {
             if (data.message) {
-                alert(`Historie pro agenta "${agentName}" byla úspěšně vymazána! (Smazáno: ${data.removed_count} zpráv)`);
-                // Reload the page to refresh all counts
-                location.reload();
+                showSuccessToast(`Historie pro agenta "${agentName}" byla úspěšně vymazána! (Smazáno: ${data.removed_count} zpráv)`);
+                // Update the history count for this agent
+                loadAgentHistoryCount(agentId);
             } else {
-                alert('Chyba při mazání historie: ' + (data.error || 'Neznámá chyba'));
+                showErrorToast('Chyba při mazání historie: ' + (data.error || 'Neznámá chyba'));
             }
         })
         .catch(error => {
-            alert('Chyba při mazání historie: ' + error);
+            showErrorToast('Chyba při mazání historie: ' + error);
         });
     }
 }
@@ -148,15 +253,15 @@ function resetAllHistory() {
         .then(response => response.json())
         .then(data => {
             if (data.message) {
-                alert('Celá historie byla úspěšně vymazána!');
-                // Reload the page to refresh all counts
-                location.reload();
+                showSuccessToast('Celá historie byla úspěšně vymazána!');
+                // Reload all agent history counts
+                loadAllAgentHistoryCounts();
             } else {
-                alert('Chyba při mazání historie: ' + (data.error || 'Neznámá chyba'));
+                showErrorToast('Chyba při mazání historie: ' + (data.error || 'Neznámá chyba'));
             }
         })
         .catch(error => {
-            alert('Chyba při mazání historie: ' + error);
+            showErrorToast('Chyba při mazání historie: ' + error);
         });
     }
 }
