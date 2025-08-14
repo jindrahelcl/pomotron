@@ -76,30 +76,6 @@ class Session:
             sounds.play_keypress()
             event.app.current_buffer.cursor_position = len(event.app.current_buffer.text)
 
-        @kb.add('c-left')
-        @erring_handler
-        def handle_ctrl_left(event):
-            sounds.play_keypress()
-            event.app.current_buffer.cursor_left(count=event.app.current_buffer.document.find_previous_word_beginning())
-
-        @kb.add('c-right')
-        @erring_handler
-        def handle_ctrl_right(event):
-            sounds.play_keypress()
-            event.app.current_buffer.cursor_right(count=event.app.current_buffer.document.find_next_word_ending())
-
-        @kb.add('m-backspace')
-        @erring_handler
-        def handle_alt_backspace(event):
-            sounds.play_keypress()
-            event.app.current_buffer.delete_before_cursor(count=event.app.current_buffer.document.find_previous_word_beginning())
-
-        @kb.add('c-delete')
-        @erring_handler
-        def handle_ctrl_delete(event):
-            sounds.play_keypress()
-            event.app.current_buffer.delete(count=event.app.current_buffer.document.find_next_word_ending())
-
         self.prompt_session = PromptSession(key_bindings=kb)
 
     def play_keypress(self):
