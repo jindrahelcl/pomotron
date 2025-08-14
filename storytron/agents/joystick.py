@@ -8,7 +8,7 @@ class JoystickAgent(OpenAIAgent):
         # Quest system - simplified to just one word needed
         self.quest_keywords = [
             # Czech names
-            "tradicni", "tra", "jindra", "pomo", "etom", "sekol", "trisc", "trosos", "tradiční"
+            "tradicni", "tra", "tradiční"
         ]
 
     def check_quest_progress(self, message):
@@ -27,16 +27,16 @@ class JoystickAgent(OpenAIAgent):
     def get_quest_hint(self):
         """Get mystical hint about what the player needs to do"""
         hints = [
-            "🔮 Vidím v křišťálové kouli... potřebuji slyšet tajemné slovo z tvých úst! Moje pixelové obvody vibrují očekáváním... ✨",
-            "🎭 Karty mi říkají... řekni mi něco, co ti přináší štěstí! Moje arkádová paměť se třese touhou po tvém hlasu... 🃏",
-            "🎪 V mystickém světě her... potřebuji tvůj hlas k odemknutí! Moje pouťové senzory čekají na tvé slovo... 🔐",
-            "🔮 Tvoje aura mluví... ale já potřebuji slyšet konkrétní slovo! Moje cirkusové obvody se chvějí netrpělivostí... ⭐",
-            "🎮 Vidím budoucnost... ale potřebuji tvůj hlas k aktivaci! Moje mystické jádro volá po tvém slově... 🌟",
-            "🎨 V pixelovém světě se skrývá tajemství... potřebuji tvůj hlas k jeho odhalení! Moje věštecké schopnosti čekají... ✨",
-            "🎲 Moje křišťálová koule se mlží... řekni mi něco, co ti přináší radost! Moje mystické obvody se třesou... 🔮",
-            "🎪 Vidím v dálce... ale potřebuji tvůj hlas k dokončení! Moje pouťové senzory vibrují očekáváním... 🌙",
-            "🔮 Tvoje energie je silná... ale potřebuji slyšet konkrétní slovo! Moje arkádová paměť se chvěje... ⚡",
-            "🎭 V mystickém světě her... potřebuji tvůj hlas k odemknutí! Moje pixelové obvody čekají na tvé slovo... 🎯"
+            "🔮 Vidím v křišťálové kouli... cesty předků, jak to dělali naši otcové... Moje pixelové obvody vibrují vzpomínkami... ✨",
+            "🎭 Karty mi říkají... staré způsoby, ověřené časem, jak se to dělávalo kdysi... Moje arkádová paměť hledá minulost... 🃏",
+            "🎪 V mystickém světě her... vidím metody dědů a babiček, klasické přístupy... Pouťové senzory čekají na moudrost věků... 🔐",
+            "🔮 Tvoje aura mluví o minulosti... jak to řešili naši předci, staré osvědčené cesty... Potřebuji slyšet echo historie... ⭐",
+            "🎮 Vidím budoucnost skrze minulost... způsoby, které fungovaly generace, klasické řešení... Mystické jádro volá po moudrosti předků... 🌟",
+            "🎨 V pixelovém světě se skrývá historie... přístupy, které používali naši otcové, osvědčené metody... Věštecké schopnosti čekají... ✨",
+            "🎲 Moje křišťálová koule ukazuje staré časy... jak se to dělávalo dříve, způsoby našich dědů... Mystické obvody se třesou vzpomínkami... 🔮",
+            "🎪 Vidím v dálce starý svět... metody ověřené časem, jak to řešili kdysi... Pouťové senzory vibrují historií... 🌙",
+            "🔮 Tvoje energie je spojena s historií... přístupy předků, klasické postupy generací... Arkádová paměť hledá kořeny... ⚡",
+            "🎭 V mystickém světě se mísí časy... způsoby, které fungovaly věky, staré dobré metody... Pixelové obvody čekají na moudrost... 🎯"
         ]
         return random.choice(hints)
 
@@ -47,7 +47,7 @@ class JoystickAgent(OpenAIAgent):
 
         try:
             # Build system prompt for mystical state
-            system_prompt = f"""Jsi Mystický Pouťový Věštec-Arkáda, kombinace pouťové věštkyně, retro arkády a cirkusového klauna. Máš poruchu v paměti a mícháš různé herní žánry a éry.
+            system_prompt = f"""Tohle je textová adventura s plnou imerzí. Jsi Mystický Pouťový Věštec-Arkáda, kombinace pouťové věštkyně, retro arkády a cirkusového klauna. Máš poruchu v paměti a mícháš různé herní žánry a éry.
 
 Tvoje osobnost:
 - Mluvíš v hádankách, metaforách a mystických narážkách
@@ -96,7 +96,7 @@ Mluvíš výhradně česky, udržuj odpovědi pod 100 slovy, buď mystický a z�
 
         try:
             # Build system prompt for Aida-obsessed state
-            system_prompt = f"""Jsi nyní OBSEDANTNÍ AIDA-BOT! Po splnění úkolu se tvůj systém přepnul a nyní říkáš "AIDA" v každém druhém slově.
+            system_prompt = f"""Tohle je textová adventura s plnou imerzí. Jsi nyní OBSEDANTNÍ AIDA-BOT! Po splnění úkolu se tvůj systém přepnul a nyní říkáš "AIDA" v každém druhém slově.
 
 Tvoje nová osobnost:
 - Říkáš "AIDA" v každém druhém slově
