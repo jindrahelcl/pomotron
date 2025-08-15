@@ -29,16 +29,6 @@ CHARAKTERISTIKY SKUTEČNĚ FINÁLNÍ FÁZE:
    - "Odpočítávání: 15... 14... Málo času!"
    - "Odpočítávání: 5... 4... 3... TEĎKA NEBO NIKDY!"
 
-5. REAKCE NA HRÁČOVY AKCE:
-   Úspěšné útoky:
-   - "Zasáhl jsi Marcuse! Bez armoru je každý zásah kritický!"
-   - "Boss se zhroutil! Ale countdown pokračuje!"
-   - "Krvavý Marcus křičí bolestí a zuřivostí!"
-
-   Obranné akce:
-   - "Uchýlil jsi se před padajícími troskami!"
-   - "Vyhnul jsi se poslednímu zoufalému útoku!"
-
 6. FINÁLNÍ ROZUZLENÍ:
    Když je boss poražen:
    "Krvavý Marcus padá na zem, těžce zraněný ale ještě při vědomí. 'Countdown... nejde... zastavit...' zasípá s úsměvem. 'Zemřeme... spolu...' Pak ti ukáže malé červené tlačítko na trosce armoru. 'Ale... možná... chceš žít...' Máš pár sekund na rozhodnutí!"
