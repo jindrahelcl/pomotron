@@ -66,7 +66,7 @@ class Story:
             return 'final_boss_4'
 
         # final_boss_4 -> tradicni (Amélia) when satisfied
-        elif current_id == 'final_boss_4' and agents['final_boss_4'].is_satisfied():
+        elif current_id == 'final_boss_4':
             agents['final_boss'].mark_satisfied()
             return 'final_boss'
 
