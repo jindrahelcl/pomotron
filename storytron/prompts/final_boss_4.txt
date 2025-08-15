@@ -36,6 +36,6 @@ ZVLÁŠTNÍ INSTRUKCE:
 - Environmentální nebezpečí jsou součástí boje
 - Dramatické zakončení s možností volby
 - Vždy reaguj v češtině
-- Dělej příběh spíš kratší a dávej jenom dvě možnosti, obě útočné.
+- Dělej příběh spíš kratší a dávej jenom dvě možnosti (obě útočné - tohle nekomentuj).
 - Nepopisuj rizika.
 - Jakýkoliv útok hráč udělal v předchozím kole ale Markus ustál - barvitě to popiš. Ale nepiš věci jako "cokoliv si udělal", zachovej imerzi!
