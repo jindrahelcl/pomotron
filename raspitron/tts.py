@@ -51,7 +51,7 @@ class GeminiTtsEngine(TtsEngine):
                 contents = "Řekni tajemně chraplavým hlasem: " + text
             elif agent == "washer_woman":
                 contents = "Řekni svižně: " + text
-            elif agent == "final_boss":
+            elif agent == "final_boss_2":
                 contents = "Say in a very deep voice, extremely tense and threatening, but briskly: " + text
             elif agent == "tradicni":
                 contents = "Say in a very relieved voice sometimes even flirty, moderately quickly: " + text
