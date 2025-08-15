@@ -20,13 +20,13 @@ class ConfessorAgent(OpenAIAgent):
 
         # Secrets to reveal based on sin count
         secrets = [
-            "UTAJOVANÉ: Vault-Tec výkonné bunkry obsahují experimentální vzorky FEV v Sublevel 7...",
-            "POŠKOZENÁ DATA: Koordináty ropné plošiny Enklávy stále vysílají na frekvenci 3.756 MHz...",
-            "ŠIFROVANÝ ZÁZNAM: Předválečná vláda ukryla zlaté rezervy v Bunkru Delta-9, heslo 'PATRIOT'...",
-            "OMEZENÝ SOUBOR: Slabé místo Bratrstva Paladínů je chladicí otvor fúzního jádra na zádech...",
-            "PŘÍSNĚ TAJNÉ: Formule Nuka-Cola Quantum obsahuje stopy izotopu Strontium-90...",
-            "UTAJOVANÉ INFORMACE: Inteligence Super Mutantů lze obnovit pomocí modifikovaného FEV Curling-13...",
-            "SKRYTÁ ZÁSOBÁRNA: Předválečný vojenský sklad pod Metro stanicí obsahuje neporušené power armor..."
+            "UTAJENÁ LOKACE: Houseboat U Bukanýra kotví přímo v centru Prahy; přístup z nábřeží, největší nápor po setmění...",
+            "POŠKOZENÁ ÚČTENKA: Na barech drží dobré ceny — palubní zásoby pro dlouhé plavby za hudbou jsou zajištěny...",
+            "AUDIO LOG: Kvalitní soundsystém kalibrovaný na deep house/techno; čisté basy i na horní palubě...",
+            "SEZÓNNÍ PŘÍLOHA: Letní terasa s barem, grilováním, dji a promítáním filmů — výhled na řeku v ceně...",
+            "REZIDENTNÍ PROTOKOL: Párty vedou dlouholetí rezidenti vybraní z české i zahraniční DJ špičky...",
+            "ATMOSFÉRICKÁ POZNÁMKA: Jedno z posledních míst s původní pražskou atmosférou devadesátek; magnet pro cestovatele...",
+            "DNES VYHLÁŠKA: Spank — DJs Identic, Tomics, Neda. Proč Spank? Protože posádka už párkrát na lodi Bukanýr dostala výprask od alkoholu; čekej čerstvý deep house/techno/elektroniku a dobré viby bez pózy..."
         ]
 
         try:
