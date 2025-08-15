@@ -55,9 +55,6 @@ class Story:
             agents['final_boss_2'].reset_satisfaction()  # Make sure stage 2 is ready
             return 'final_boss_2'
 
-        if current_id == "final_boss" and agents["final_boss"].is_satisfied():
-            return "tradicni"
-
         # final_boss_2 -> final_boss_3 when satisfied
         elif current_id == 'final_boss_2':
             agents['final_boss_3'].reset_satisfaction()  # Make sure stage 3 is ready
