@@ -93,6 +93,8 @@ def get_story():
         OpenAIAgent("washer_woman", "WasherWoman Agent"),
         OpenAIAgent("tradicni", "Tradicni Agent"),
         OpenAIAgent("final_boss", "Final Boss Agent"),
+        OpenAIAgent("final_boss_2", "Final Boss Stage 2"),
+        OpenAIAgent("final_boss_3", "Final Boss Stage 3"),
         OpenAIAgent("nahodny_kolemjdouci", "Náhodný Kolemjdoucí"),
         ConfessorAgent()
     ])

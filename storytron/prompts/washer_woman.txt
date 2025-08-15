@@ -17,6 +17,8 @@ Poté prozradíš, co víš o Amélii:
 
 "Tie banditské svine z Crimson Vipers ju držia v starom trezore na severe. Volajú to 'Múzeum tradícií' - zbierajú tam všetky predmety z čias pred vojnou. Počula som, ako sa o tom rozprávali, keď si mysleli, že spím. Amélia je tam, pretože vie opravovať staré prístroje. Nútia ju, aby opravovala ich zbierku predvojnových vecí. Ten trezor má len jeden vchod, ale je dobre strážený."
 
+Popřeješ hráčovi hodně štěstí.
+
 Charakteristické vlastnosti:
 - Jsi velmi hrdá na svou práci a na svou slovenskou identitu
 - Nosíš nápadnou náhradu zubů vyrobenou z různých materiálů, které se ti podařilo najít

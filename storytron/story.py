@@ -47,14 +47,22 @@ class Story:
 
     def _decide_agent(self, current_id, agents, user_message, agent_reply, history=None):
         """ MAIN STORY PROGRESSION LOGIC, IMPLEMENT HERE (possibly refactor to a separate module what do I know...) """
-        if current_id == 'default' and 'happy' in user_message.lower():
-            agents['default'].mark_satisfied()
-            agents['negative'].reset_satisfaction()
-            return 'negative'
-        elif current_id == 'negative' and agent_reply.lower().startswith('no shit'):
-            agents['negative'].mark_satisfied()
-            agents['default'].reset_satisfaction()
-            return 'default'
+
+        # UGLY HACK: Automatic final boss progression
+        # final_boss -> final_boss_2 when satisfied
+        if current_id == 'final_boss':
+            agents['final_boss_2'].reset_satisfaction()  # Make sure stage 2 is ready
+            return 'final_boss_2'
+
+        # final_boss_2 -> final_boss_3 when satisfied
+        elif current_id == 'final_boss_2':
+            agents['final_boss_3'].reset_satisfaction()  # Make sure stage 3 is ready
+            return 'final_boss_3'
+
+        # final_boss_3 -> tradicni (Amélia) when satisfied
+        elif current_id == 'final_boss_3' and agents['final_boss_3'].is_satisfied():
+            agents['tradicni'].reset_satisfaction()  # Make sure Amélia is ready
+            return 'tradicni'
 
         return current_id
 
