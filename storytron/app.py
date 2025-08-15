@@ -95,6 +95,7 @@ def get_story():
         OpenAIAgent("final_boss", "Final Boss Agent"),
         OpenAIAgent("final_boss_2", "Final Boss Stage 2"),
         OpenAIAgent("final_boss_3", "Final Boss Stage 3"),
+        OpenAIAgent("final_boss_4", "Final Boss Stage 4"),
         OpenAIAgent("nahodny_kolemjdouci", "Náhodný Kolemjdoucí"),
         ConfessorAgent()
     ])

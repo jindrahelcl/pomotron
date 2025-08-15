@@ -50,17 +50,22 @@ class Story:
 
         # UGLY HACK: Automatic final boss progression
         # final_boss -> final_boss_2 when satisfied
-        if current_id == 'final_boss':
+        if current_id == 'final_boss' and agents['final_boss'].is_satisfied():
             agents['final_boss_2'].reset_satisfaction()  # Make sure stage 2 is ready
             return 'final_boss_2'
 
         # final_boss_2 -> final_boss_3 when satisfied
-        elif current_id == 'final_boss_2':
+        elif current_id == 'final_boss_2' and agents['final_boss_2'].is_satisfied():
             agents['final_boss_3'].reset_satisfaction()  # Make sure stage 3 is ready
             return 'final_boss_3'
 
-        # final_boss_3 -> tradicni (Amélia) when satisfied
+        # final_boss_3 -> final_boss_4 when satisfied
         elif current_id == 'final_boss_3' and agents['final_boss_3'].is_satisfied():
+            agents['final_boss_4'].reset_satisfaction()  # Make sure stage 4 is ready
+            return 'final_boss_4'
+
+        # final_boss_4 -> tradicni (Amélia) when satisfied
+        elif current_id == 'final_boss_4' and agents['final_boss_4'].is_satisfied():
             agents['tradicni'].reset_satisfaction()  # Make sure Amélia is ready
             return 'tradicni'
 
