@@ -45,9 +45,16 @@ class GeminiTtsEngine(TtsEngine):
             # Use provided voice or default to "Kore"
             voice_name = voice if voice else "Kore"
 
+            # UGLY HACK TO CONTROL THE PROMPTS PER AGENT
+            contents = text
+            if agent == "dry_gum":
+                contents = "Řekni tajemně chraplavým hlasem: " + text
+            elif agent == "washer_woman":
+                contents = "Řekni svižně: " + text
+
             response = self.client.models.generate_content(
                 model="gemini-2.5-flash-preview-tts",
-                contents=text,
+                contents=contents,
                 config=types.GenerateContentConfig(
                     response_modalities=["AUDIO"],
                     speech_config=types.SpeechConfig(
