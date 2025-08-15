@@ -54,7 +54,7 @@ class GeminiTtsEngine(TtsEngine):
             elif agent == "final_boss_2":
                 contents = "Say in a very deep voice, extremely tense and threatening, but briskly: " + text
             elif agent == "tradicni":
-                contents = "Say in a very relieved voice sometimes even flirty, moderately quickly: " + text
+                contents = "Say in a very relieved, surprised voice, sometimes even flirty, moderately quickly: " + text
 
             response = self.client.models.generate_content(
                 model="gemini-2.5-flash-preview-tts",
