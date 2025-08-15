@@ -50,7 +50,7 @@ class Story:
 
         # UGLY HACK: Automatic final boss progression
         # final_boss -> final_boss_2 when satisfied
-        if current_id == 'final_boss':
+        if current_id == 'final_boss' and not agents['final_boss'].is_satisfied():
             agents["final_boss"].mark_satisfied()
             agents['final_boss_2'].reset_satisfaction()  # Make sure stage 2 is ready
             return 'final_boss_2'
